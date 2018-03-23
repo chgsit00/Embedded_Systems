@@ -1,0 +1,13 @@
+/Projects/.recommenders
+/Projects/.metadata
+.DS_Store
+*.core.prefs
+*.classpath
+/Projects/iCareServer/.settings/.gitignore
+*.aux
+*.log
+*.synctex.gz
+/notes/AssignmentPCM.lof
+/notes/AssignmentPCM.out
+/notes/AssignmentPCM.toc
+/notes/images/architecture_with_devices.xcf

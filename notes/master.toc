@@ -1,0 +1,59 @@
+\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax 
+\defcounter {refsection}{0}\relax 
+\contentsline {chapter}{\numberline {1}Introduction}{2}{chapter.1}
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {1.1}Our company}{2}{section.1.1}
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {1.2}Staff}{2}{section.1.2}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {1.2.1}Dennis: Frontend Designer}{2}{subsection.1.2.1}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {1.2.2}Tony: System Designer}{3}{subsection.1.2.2}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {1.2.3}Christoph: Software Architect}{3}{subsection.1.2.3}
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {1.3}iCare - our product}{3}{section.1.3}
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {1.4}Aim}{3}{section.1.4}
+\defcounter {refsection}{0}\relax 
+\contentsline {section}{\numberline {1.5}Objectives}{4}{section.1.5}
+\defcounter {refsection}{0}\relax 
+\contentsline {chapter}{\numberline {2}Customer Feedback}{5}{chapter.2}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {2.0.1}Understanding the customer}{5}{subsection.2.0.1}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {2.0.2}Concrete questions relevant for project management}{5}{subsection.2.0.2}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline How important for you is to stay below the financial frame given?}{5}{section*.32770}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline Which features are most important to you for the first release? Please prioritize the given features in descending order.}{5}{section*.32771}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline How important is it to you that the deadline is met?}{6}{section*.32772}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline How important is good usability to you.}{6}{section*.32773}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline How important is an aesthetically designed product to you.}{7}{section*.32774}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline How important is performance to you?}{7}{section*.32775}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {2.0.3}Gathering Feedback for the UI Mockups}{7}{subsection.2.0.3}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {2.0.4}Feedback on the designs:}{8}{subsection.2.0.4}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline How do you like the iCare software logo?}{8}{section*.32776}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline How do you like the mockups for the frontend?}{8}{section*.32777}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {2.0.5}Feedback to the prototype:}{9}{subsection.2.0.5}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline How do you like the prototype?}{9}{section*.32778}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline How do you rate the implementation of the features in the tracking page?}{10}{section*.32779}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline How do you rate the implementation of the Notification features?}{10}{section*.32780}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline How do you rate the implementation of the features in the eco monitor page?}{11}{section*.32781}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline How do you rate the comprehensibility and amount of information on the Dashboard Page?}{11}{section*.32782}
+\defcounter {refsection}{0}\relax 
+\contentsline {subsubsection}{\nonumberline How satisfied are you with the refresh rate of the data. Is the information up-to-date enough for you?}{11}{section*.32783}
