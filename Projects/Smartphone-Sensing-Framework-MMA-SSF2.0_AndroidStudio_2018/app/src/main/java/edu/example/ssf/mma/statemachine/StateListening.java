@@ -23,26 +23,26 @@ package edu.example.ssf.mma.statemachine;
 
 // TODO: Auto-generated Javadoc
 /**
- * This class extends the AbstractState Class and sets the stateLabel to "DRIVING".
+ * This class extends the AbstractState Class and sets the stateLabel to "WALKING".
  *
  * @author Dionysios Satikidis (dionysios.satikidis@gmail.com)
  * @version 1.0
  */
 
-public class StateDriving extends AbstractState{
+public class StateListening extends AbstractState{
 	
 	/**
-	 * Instantiates a new state driving.
+	 * Instantiates a new state walking.
 	 *
-	  * @param stateMachine Callback-reference to the IParentStateMachine
+	 * @param stateMachine Callback-reference to the IParentStateMachine
 	 */
-	public StateDriving(IParentStateMachine stateMachine) {
-		super("DRIVING", stateMachine);
+	public StateListening(IParentStateMachine stateMachine) {
+		super("WALKING", stateMachine);
 	}
 	
 	/**
-	 * Override-method.
-	 */
+	 * Override-method.  Gets the StateName and sets the State Label
+	 * */
 	@Override
 	public void doit() {
 		getParentStateMachine().setStateLabel(this.getStateName());
@@ -65,5 +65,4 @@ public class StateDriving extends AbstractState{
 		// TODO Auto-generated method stub
 		
 	}
-
 }

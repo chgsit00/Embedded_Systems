@@ -106,28 +106,11 @@ public class CsvFileWriter {
      * Writes the captured data in the csv file.
      *
      * @param timestamp current timestamp
-     * @param accx current Accelerometer X-Value
-     * @param accy current Accelerometer Y-Value
-     * @param accz current Accelerometer Z-Value
-     * @param accVecA = sqrt(accx+accy+accz)
+
      */
 	public static void writeLine(String cnt,
 			String timestamp,
-			String accx,
-			String accy,
-			String accz,
-			String accVecA,
-			String gpsAlt,
-			String gpsLat,
-            String gpsLon,
             String micAmpl,
-            String rotX,
-            String rotY,
-            String rotZ,
-            String magnX,
-            String magnY,
-            String magnZ,
-            String proximity,
 			String event
 			) {
 		if (fileWriter==null) {
@@ -136,21 +119,7 @@ public class CsvFileWriter {
 		try {
 			fileWriter.write(cnt + separator +
 					timestamp+separator+
-					accx+separator+
-					accy+separator+
-					accz+separator+
-					accVecA+separator+
-                    gpsAlt+separator+
-                    gpsLat+separator+
-                    gpsLon+separator+
                     micAmpl+separator+
-                    rotX+separator+
-                    rotY+separator+
-                    rotZ+separator+
-                    magnX+separator+
-                    magnY+separator+
-                    magnZ+separator+
-                    proximity+separator+
 					event+separator+
 					"\r\n");
 

@@ -52,43 +52,10 @@
             android:textOn="REC..."
             android:textSize="12sp"
             android:textStyle="bold|italic"
-            app:layout_constraintBottom_toBottomOf="@+id/mmaButton"
             app:layout_constraintEnd_toStartOf="@+id/fileexplorer"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/mmaButton"
-            app:layout_constraintTop_toTopOf="@+id/mmaButton"
-            app:layout_constraintVertical_bias="0.0" />
-
-
-        <ToggleButton
-            android:id="@+id/mmaButton"
-            android:layout_width="100dp"
-            android:layout_height="60dp"
-            android:layout_marginTop="48dp"
-            android:background="@drawable/buttonshape"
-            android:text="MMA"
-            android:textColor="@android:color/white"
-            android:textOff="Start MMA"
-            android:textOn="Stop MMA"
-            app:layout_constraintEnd_toStartOf="@+id/recMic"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textViewActState" />
-
-        <ToggleButton
-            android:id="@+id/eventHandler"
-            android:layout_width="117dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Event"
-            android:textOff="Event Start"
-            android:textOn="Event Stop"
-            android:background="@drawable/buttonshape"
-            android:textColor="@android:color/white"
-            app:layout_constraintEnd_toStartOf="@+id/editText"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/mmaButton" />
 
         <TextView
             android:id="@+id/TextOne"
@@ -159,17 +126,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/headerTextView" />
 
-        <EditText
-            android:id="@+id/editText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:hint="Type Custom Event"
-            android:singleLine="true"
-            app:layout_constraintBottom_toBottomOf="@+id/eventHandler"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/eventHandler"
-            app:layout_constraintTop_toTopOf="@+id/eventHandler" />
 
         <Button
             android:id="@+id/showChart"

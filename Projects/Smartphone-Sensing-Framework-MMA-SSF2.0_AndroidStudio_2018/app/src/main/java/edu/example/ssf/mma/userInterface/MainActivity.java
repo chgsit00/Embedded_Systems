@@ -77,8 +77,7 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
     private TextView textView4;
     private TextView textView5;
     private static TextView textViewActState;
-    private EditText eventEditText;
-    private ToggleButton recButton, mmaButton, eventButton;
+    private ToggleButton recButton;
     private Button fileBrowserButton, showChartButton;
 
     //Text View Result
@@ -89,6 +88,11 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
     private StateMachineHandler stateMachineHandler;
 
     @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
@@ -97,7 +101,6 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
         ActivityCompat.requestPermissions(MainActivity.this, new  String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.RECORD_AUDIO,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_MULTIPLE_REQUEST);
 
         //UI -- Textviews init
-        eventEditText = findViewById(R.id.editText);
         headerTextView = findViewById(R.id.headerTextView);
         headerTextView.setText(defaultMessage);
         textView1 = findViewById(R.id.TextOne);
@@ -151,64 +154,6 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
             }
         });
 
-        eventButton = findViewById(R.id.eventHandler);
-        eventButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if((mmaButton.isChecked()) || (recButton.isChecked())){
-
-                    if (eventButton.isChecked()) {
-                        if(eventEditText.getText().toString().trim().length() == 0){
-                            CurrentTickData.event = "Event Occured";
-                        }
-                        else{
-                            CurrentTickData.event = eventEditText.getText().toString();
-                        }
-
-                    } else {
-                        CurrentTickData.event = "";
-
-                    }
-                    Log.d("event", "" + CurrentTickData.event);
-                }
-                else {
-                    Toast.makeText(MainActivity.this,"Please first start the MMA", Toast.LENGTH_LONG).show();
-                    eventButton.setChecked(false);
-                }
-                if(eventButton.isChecked()){
-                    eventEditText.setText(null);
-                }
-            }
-        });
-        mmaButton = findViewById(R.id.mmaButton);
-        mmaButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (t.isAlive()){
-                    // Do Nothing
-                }
-                else{
-                    t.start();}
-                if (mmaButton.isChecked()) {
-
-                    HardwareFactory.hwAcc.start();
-                    HardwareFactory.hwGPS.initGPS(MainActivity.this);
-                    HardwareFactory.hwGyro.start();
-                    HardwareFactory.hwMagn.start();
-                    HardwareFactory.hwProxi.start();
-                    stateMachineHandler.startStateMachine();
-                    showChartButton.setVisibility(View.VISIBLE);
-                }else{
-                    HardwareFactory.hwAcc.stop();
-                    HardwareFactory.hwGPS.stop();
-                    HardwareFactory.hwGyro.stop();
-                    HardwareFactory.hwMagn.stop();
-                    HardwareFactory.hwProxi.stop();
-                    CurrentTickData.resetValues();
-                }
-
-            }
-        });
         showChartButton = findViewById(R.id.showChart);
         showChartButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -258,28 +203,8 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
             navigationBool = false;
             onClickUI();
         }
-            if (idOfNavObj == R.id.nav_acc) {
-                headerTextView.setText(R.string.acce);
-                navigationBool = true;
-                onClickUI();
-            } else if (idOfNavObj == R.id.nav_gyro) {
-                headerTextView.setText(R.string.gyro);
-                navigationBool = true;
-                onClickUI();
-            } else if (idOfNavObj == R.id.nav_magn) {
-                headerTextView.setText(R.string.magn);
-                navigationBool = true;
-                onClickUI();
-            } else if (idOfNavObj == R.id.nav_mic) {
+            if (idOfNavObj == R.id.nav_mic) {
                 headerTextView.setText(R.string.mic);
-                navigationBool = true;
-                onClickUI();
-            } else if (idOfNavObj == R.id.nav_gps) {
-                headerTextView.setText(R.string.gps);
-                navigationBool = true;
-                onClickUI();
-            } else if (idOfNavObj == R.id.nav_proximity) {
-                headerTextView.setText(R.string.proximity);
                 navigationBool = true;
                 onClickUI();
             }
@@ -304,49 +229,13 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (idOfNavObj == R.id.nav_acc) {
-                            textView5.setVisibility(View.INVISIBLE);
-                            textView1.setText("X: " + String.format("%.2f", CurrentTickData.accX));
-                            textView2.setText("Y: " + String.format("%.2f", CurrentTickData.accY));
-                            textView3.setText("Z: " + String.format("%.2f", CurrentTickData.accZ));
-                            textView4.setText("AccV: " + String.format("%.2f", CurrentTickData.accVecA));
-                        } else if (idOfNavObj == R.id.nav_gps) {
-                            textView1.setText("GPS Alt: " + String.format("%.2f", CurrentTickData.GPSalt));
-                            textView2.setText("GPS Lat: " + String.format("%.6f", CurrentTickData.GPSlat));
-                            textView3.setText("GPS Lon: "  + String.format("%.6f", CurrentTickData.GPSlon));
-                            textView4.setText("GPS Bear: " + String.format("%.2f", CurrentTickData.GPSbearing));
-                            textView5.setText("GPS Speed: " + String.format("%.2f", CurrentTickData.GPSspeed));
-                            Log.d("GPS", "lat : " + CurrentTickData.GPSlat + "---" + "lon : " + CurrentTickData.GPSlon );
-                        } else if (idOfNavObj == R.id.nav_gyro){
-                            textView4.setVisibility(View.INVISIBLE);
-                            textView5.setVisibility(View.INVISIBLE);
-                            textView1.setText("Rot. X: " + String.format("%.2f", CurrentTickData.rotationX));
-                            textView2.setText("Rot. Y: " + String.format("%.2f", CurrentTickData.rotationY));
-                            textView3.setText("Rot. Z: " + String.format("%.2f", CurrentTickData.rotationZ));
-                            // Log.d("GPS", "lat : " + CurrentTickData. + "---" + "lon : " + CurrentTickData. );
-                        } else if (idOfNavObj == R.id.nav_mic) {
+                        if (idOfNavObj == R.id.nav_mic) {
                             textView2.setVisibility(View.INVISIBLE);
                             textView3.setVisibility(View.INVISIBLE);
                             textView4.setVisibility(View.INVISIBLE);
                             textView5.setVisibility(View.INVISIBLE);
                             textView1.setText("Max Aplitude : " + CurrentTickData.micMaxAmpl);
-
-                        } else if (idOfNavObj == R.id.nav_magn){
-                            textView4.setVisibility(View.INVISIBLE);
-                            textView5.setVisibility(View.INVISIBLE);
-                            textView1.setText("Magn. X: " + String.format("%.2f", CurrentTickData.magneticX));
-                            textView2.setText("Magn. Y: " + String.format("%.2f", CurrentTickData.magneticY));
-                            textView3.setText("Magn. Z: " + String.format("%.2f", CurrentTickData.magneticZ));
-                            // Log.d("GPS", "lat : " + CurrentTickData. + "---" + "lon : " + CurrentTickData. );
-                        }else if (idOfNavObj == R.id.nav_proximity) {
-                            textView2.setVisibility(View.INVISIBLE);
-                            textView3.setVisibility(View.INVISIBLE);
-                            textView4.setVisibility(View.INVISIBLE);
-                            textView5.setVisibility(View.INVISIBLE);
-                            textView1.setText("Proximity: " + CurrentTickData.proxState);
                         }
-
-
                     }
                 });
                 try {

@@ -66,6 +66,10 @@ public class AccChart extends Activity {
     protected void onResume() {
         super.onResume();
         // we're going to simulate real time with thread that append data to the graph
+        //startThread();
+    }
+
+    private void startThread() {
         new Thread(new Runnable() {
 
             @Override
@@ -76,7 +80,7 @@ public class AccChart extends Activity {
 
                         @Override
                         public void run() {
-                            addEntry();
+                    //        addEntry();
                         }
                     });
 
@@ -90,12 +94,4 @@ public class AccChart extends Activity {
             }
         }).start();
     }
-
-    // add random data to graph
-    private void addEntry() {
-        // here, we choose to display max 10 points on the viewport and we scroll to end
-        series.appendData(new DataPoint(lastX++, CurrentTickData.accVecA), true, 1000);
-    }
-
-
 }
