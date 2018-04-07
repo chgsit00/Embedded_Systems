@@ -30,8 +30,10 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
@@ -88,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
     /** Declaration of the state machine. */
 
     private StateMachineHandler stateMachineHandler;
-    private GoogleAccessor GoogleAccessor;
+    static GoogleAccessor GoogleAccessor;
 
 
 
@@ -112,10 +114,9 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        this.GoogleAccessor = new GoogleAccessor(this);
 
-
-        this.GoogleAccessor.signIn();
+        GoogleAccessor = new GoogleAccessor(this);
+        GoogleAccessor.signIn();
 
 
         setContentView(R.layout.activity_main);
@@ -170,6 +171,7 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
                         onClickMicREC();
                         CurrentTickData.resetValues();
                         CsvFileWriter.closeFile();
+                        GoogleAccessor.startSaveCsvActivity(CsvFileWriter.lastFilePath);
                         stateMachineHandler.stopStateMachine();
                     }
                 }

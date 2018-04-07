@@ -17,14 +17,22 @@
  */
 package edu.example.ssf.mma.data;
 
+import android.os.Build;
 import android.os.Environment;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import edu.example.ssf.mma.config.ConfigApp;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -48,8 +56,8 @@ public class CsvFileWriter {
 	private final static String separator = ";";
 
 
+	public static String lastFilePath;
 
-	
 	/**
 	 * Constructor of the CSVFileWriter class.
 	 */
@@ -74,6 +82,8 @@ public class CsvFileWriter {
 			}
 
 			outputFile = new File( dir,fileName);
+			lastFilePath = outputFile.getPath();
+
 			Log.d("creating file", "File Created");
 			fileWriter=new FileWriter(outputFile, true);
 			fileWriter.write("Tick" +separator+
@@ -139,8 +149,9 @@ public class CsvFileWriter {
 			return;
 		}
 		try {
+
 			fileWriter.close();
-			Log.d("closing file", "File closed");
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
