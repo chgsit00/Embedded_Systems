@@ -2,18 +2,14 @@ package edu.example.ssf.mma.google;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Bitmap;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
-import android.test.ActivityTestCase;
 import android.util.Log;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.drive.CreateFileActivityOptions;
@@ -32,14 +28,10 @@ import java.io.OutputStream;
 
 import static android.app.Activity.RESULT_OK;
 
-/**
- * Created by dennismuller on 04.04.18.
- */
-
 public class GoogleAccessor  {
-    public  GoogleSignInClient mGoogleSignInClient;
-    public  DriveClient mDriveClient;
-    public  DriveResourceClient mDriveResourceClient;
+    private DriveClient mDriveClient;
+    private DriveResourceClient mDriveResourceClient;
+    @SuppressLint("StaticFieldLeak")
     private static  Activity Context;
 
     public GoogleAccessor(Activity context){
@@ -47,15 +39,9 @@ public class GoogleAccessor  {
     }
 
 
-    public  void startCamera(){
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        Context.startActivityForResult(intent, REQUEST_CODE_CAPTURE_IMAGE);
-
-    }
-
 
     /** Create a new file and save it to Drive. */
-    public  void saveFileToDrive(final Bitmap image) {
+    private void saveFileToDrive(final Bitmap image) {
         // Start by creating a new contents, and setting a callback.
         Log.i("Info", "Creating new contents.");
 
@@ -83,15 +69,13 @@ public class GoogleAccessor  {
     private  final int REQUEST_CODE_CREATOR = 2;
 
 
-    private Bitmap mBitmapToSave;
-
     /** Start sign in activity. */
     @SuppressLint("RestrictedApi")
     public void signIn() {
         Log.i(TAG, "Start sign in");
-        mGoogleSignInClient = buildGoogleSignInClient();
+        GoogleSignInClient mGoogleSignInClient = buildGoogleSignInClient();
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-        this.Context.startActivityForResult(signInIntent,REQUEST_CODE_SIGN_IN );
+        Context.startActivityForResult(signInIntent,REQUEST_CODE_SIGN_IN );
 
 //
     }
@@ -103,7 +87,7 @@ public class GoogleAccessor  {
                 new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                         .requestScopes(Drive.SCOPE_FILE)
                         .build();
-        return GoogleSignIn.getClient(this.Context, signInOptions);
+        return GoogleSignIn.getClient(Context, signInOptions);
     }
 
 
@@ -164,23 +148,24 @@ public class GoogleAccessor  {
                 if (resultCode == RESULT_OK) {
                     Log.i(TAG, "Signed in successfully.");
                     // Use the last signed in account here since it already have a Drive scope.
-                    mDriveClient = Drive.getDriveClient(this.Context, GoogleSignIn.getLastSignedInAccount(this.Context));
+                    mDriveClient = Drive.getDriveClient(Context, GoogleSignIn.getLastSignedInAccount(Context));
                     // Build a drive resource client.
                     mDriveResourceClient =
-                            Drive.getDriveResourceClient(this.Context, GoogleSignIn.getLastSignedInAccount(this.Context));
+                            Drive.getDriveResourceClient(Context, GoogleSignIn.getLastSignedInAccount(Context));
                     // Start camera.
-                    this.Context.startActivityForResult(
+                    Context.startActivityForResult(
                             new Intent(MediaStore.ACTION_IMAGE_CAPTURE), REQUEST_CODE_CAPTURE_IMAGE);
                 }
                 break;
             case REQUEST_CODE_CAPTURE_IMAGE:
                 Log.i(TAG, "capture image request code");
                 // Called after a photo has been taken.
+                Bitmap bitmap;
                 if (resultCode == RESULT_OK) {
                     Log.i(TAG, "Image captured successfully.");
                     // Store the image data as a bitmap for writing later.
-                    mBitmapToSave = (Bitmap) data.getExtras().get("data");
-                    saveFileToDrive(mBitmapToSave);
+                    bitmap = (Bitmap) data.getExtras().get("data");
+                    saveFileToDrive(bitmap);
                 }
                 break;
             case REQUEST_CODE_CREATOR:
@@ -188,9 +173,8 @@ public class GoogleAccessor  {
                 // Called after a file is saved to Drive.
                 if (resultCode == RESULT_OK) {
                     Log.i(TAG, "Image successfully saved.");
-                    mBitmapToSave = null;
                     // Just start the camera again for another photo.
-                    this.Context.startActivityForResult(
+                    Context.startActivityForResult(
                             new Intent(MediaStore.ACTION_IMAGE_CAPTURE), REQUEST_CODE_CAPTURE_IMAGE);
                 }
                 break;
