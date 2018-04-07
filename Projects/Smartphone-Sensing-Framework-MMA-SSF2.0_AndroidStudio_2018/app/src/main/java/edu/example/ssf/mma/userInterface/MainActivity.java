@@ -27,6 +27,7 @@ package edu.example.ssf.mma.userInterface;
  * @version 2.0
  */
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -46,12 +47,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-
 import edu.example.ssf.mma.R;
 import edu.example.ssf.mma.charts.AccChart;
 import edu.example.ssf.mma.config.ConfigApp;
 import edu.example.ssf.mma.data.CsvFileWriter;
 import edu.example.ssf.mma.data.CurrentTickData;
+import edu.example.ssf.mma.google.GoogleAccessor;
 import edu.example.ssf.mma.hardwareAdapter.HardwareFactory;
 import edu.example.ssf.mma.timer.StateMachineHandler;
 
@@ -85,8 +86,23 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
 
 
     /** Declaration of the state machine. */
-    private StateMachineHandler stateMachineHandler;
 
+    private StateMachineHandler stateMachineHandler;
+    private GoogleAccessor GoogleAccessor;
+
+
+
+
+    @SuppressLint("RestrictedApi")
+    @Override
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        GoogleAccessor.actvityResultHanlder(requestCode, resultCode, data);
+
+    }
+
+
+    @SuppressLint("RestrictedApi")
     @Override
     protected void onStart() {
         super.onStart();
@@ -96,6 +112,12 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+        this.GoogleAccessor = new GoogleAccessor(this);
+
+
+        this.GoogleAccessor.signIn();
+
+
         setContentView(R.layout.activity_main);
 
         ActivityCompat.requestPermissions(MainActivity.this, new  String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.RECORD_AUDIO,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_MULTIPLE_REQUEST);
