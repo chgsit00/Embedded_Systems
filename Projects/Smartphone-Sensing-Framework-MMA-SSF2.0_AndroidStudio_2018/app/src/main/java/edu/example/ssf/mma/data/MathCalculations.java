@@ -40,17 +40,8 @@ public class MathCalculations {
     }
 
     public static double getDB(Integer ampli){
-
         int x = ampli;
-        double x2 = x;
-        double db = (20 * Math.log10(x2 / 0.1));
-        if(db>0)
-        {
-            return db;
-        }
-        else
-        {
-            return 0;
-        }
+        double db = (20 * Math.log10((double) x / 0.1));
+        return db > 0 ? db : 0;
     }
 }
