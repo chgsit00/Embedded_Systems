@@ -142,7 +142,7 @@ public class microphone extends Activity implements IMicrophone {
                         }
                     });
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(1);
                     } catch (Exception e) {
 
                     }

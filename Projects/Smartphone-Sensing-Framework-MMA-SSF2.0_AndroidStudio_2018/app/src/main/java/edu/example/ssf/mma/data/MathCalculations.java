@@ -17,6 +17,8 @@
  */
 package edu.example.ssf.mma.data;
 
+import android.util.Log;
+
 import java.text.SimpleDateFormat;
 
 /**
