@@ -114,7 +114,7 @@ public class StateMachineHandler extends Handler{
 
 
 
-		if(MainActivity.mmaCallBackBool) {
+		if(true/*MainActivity.mmaCallBackBool*/) {
 			//Log.d("getAccX", "StateMachineHandler.MainActivity.mmaCallBackBool");
 				if(ConfigApp.isSimulation){
 

@@ -47,8 +47,6 @@ public class GoogleAccessor  {
         Context = context;
     }
 
-
-
     /** Create a new file and save it to Drive. */
     private void saveFileToDrive(final Bitmap image) {
         // Start by creating a new contents, and setting a callback.
@@ -99,8 +97,6 @@ public class GoogleAccessor  {
     private  final int REQUEST_CODE_SIGN_IN = 0;
     private  final int REQUEST_CODE_CAPTURE_IMAGE = 1;
     private  final int REQUEST_CODE_CREATOR = 2;
-
-
 
     /** Start sign in activity. */
     @SuppressLint("RestrictedApi")

@@ -132,9 +132,6 @@ public class CsvFileWriter {
                     micAmpl+separator+
 					event+separator+
 					"\r\n");
-
-
-
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			//e.printStackTrace();

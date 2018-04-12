@@ -164,6 +164,7 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
                 }
                 else {
                     if (recButton.isChecked()) {
+                        stateMachineHandler.startStateMachine();
                         onClickMicREC();
                         CsvFileWriter.crtFile();
                         mmaCallBackBool = true;
