@@ -24,7 +24,6 @@ import android.content.pm.PackageManager;
 import android.os.Environment;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
-import android.widget.TextView;
 
 import edu.example.ssf.mma.data.CurrentTickData;
 import edu.example.ssf.mma.data.MathCalculations;
@@ -36,7 +35,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import android.media.MediaRecorder;
-
+import android.media.AudioFormat;
+import android.media.AudioRecord;
+//import be.hogent.tarsos.dsp.AudioEvent;
+//import be.hogent.tarsos.dsp.onsets.PercussionOnsetDetector;
+//import be.hogent.tarsos.dsp.onsets.OnsetHandler;
 /**
  * Initialising the Microphone of the Smartphone and get the data output form
  * the sensor.
@@ -57,6 +60,9 @@ public class microphone extends Activity implements IMicrophone {
 
     protected Double maxAmplitude = 0.0d;
 
+    private AudioRecord recorder;
+    private byte[] buffer;
+    static final int SAMPLE_RATE = 8000;
 
     /**
      * 	create the new media recorder in order to record the audio.
@@ -83,6 +89,15 @@ public class microphone extends Activity implements IMicrophone {
             mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
             mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 
+        // STEP 1: setup AudioRecord
+        int minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE,
+                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+
+        buffer = new byte[minBufferSize];
+
+        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
+                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
+                minBufferSize);
     }
 
     public void runAgain(){
@@ -134,11 +149,24 @@ public class microphone extends Activity implements IMicrophone {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if(isRecording){
-                                maxAmplitude = MathCalculations.getDB(mediaRecorder.getMaxAmplitude());
-                                CurrentTickData.micMaxAmpl = maxAmplitude;
-                                Log.d("AmpliMax", CurrentTickData.micMaxAmpl+ "");
-                            }
+
+                                while (isRecording) {
+                                    int bufferReadResult = recorder.read(buffer, 0,
+                                            buffer.length);
+                                     maxAmplitude = MathCalculations.getDB(bufferReadResult);
+                                     CurrentTickData.micMaxAmpl = maxAmplitude;
+//                                    AudioEvent audioEvent = new AudioEvent(tarsosFormat,
+//                                            bufferReadResult);
+//                                    audioEvent.setFloatBufferWithByteBuffer(buffer);
+//                                    mPercussionOnsetDetector.process(audioEvent);
+
+                                }
+                            recorder.stop();
+                         //   if(isRecording){
+                         //       maxAmplitude = MathCalculations.getDB(mediaRecorder.getMaxAmplitude());
+                         //       CurrentTickData.micMaxAmpl = maxAmplitude;
+                         //       Log.d("AmpliMax", CurrentTickData.micMaxAmpl+ "");
+                         //   }
                         }
                     });
                     try {
