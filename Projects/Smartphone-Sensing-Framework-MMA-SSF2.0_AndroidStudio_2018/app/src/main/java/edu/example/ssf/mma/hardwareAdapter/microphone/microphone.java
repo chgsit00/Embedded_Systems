@@ -40,21 +40,29 @@ import android.media.AudioRecord;
 //import be.hogent.tarsos.dsp.AudioEvent;
 //import be.hogent.tarsos.dsp.onsets.PercussionOnsetDetector;
 //import be.hogent.tarsos.dsp.onsets.OnsetHandler;
+
 /**
  * Initialising the Microphone of the Smartphone and get the data output form
  * the sensor.
+ *
  * @author D. Lagamtzis
  * @version 2.0
  */
 public class microphone extends Activity implements IMicrophone {
 
-    /** Reference to the media recorder. */
+    /**
+     * Reference to the media recorder.
+     */
     private MediaRecorder mediaRecorder = null;
 
-    /** setting the variable for responsible for recording to false. */
+    /**
+     * setting the variable for responsible for recording to false.
+     */
     private Boolean isRecording = true;
 
-    /** Reference to the audio file. */
+    /**
+     * Reference to the audio file.
+     */
     private File audiofile = null;
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh_mm_ss");
 
@@ -65,12 +73,11 @@ public class microphone extends Activity implements IMicrophone {
     static final int SAMPLE_RATE = 8000;
 
     /**
-     * 	create the new media recorder in order to record the audio.
+     * create the new media recorder in order to record the audio.
      */
     public microphone(Context context) {
         initMicrophone(context);
     }
-
 
 
     /**
@@ -79,15 +86,15 @@ public class microphone extends Activity implements IMicrophone {
 
     public void initMicrophone(Context context) {
 
-            if ((ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) ||
-                    (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)) {
+        if ((ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) ||
+                (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)) {
 
-                Log.e("mic", "error");
-            }
-            mediaRecorder = new MediaRecorder();
-            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            Log.e("mic", "error");
+        }
+        mediaRecorder = new MediaRecorder();
+        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 
         // STEP 1: setup AudioRecord
         int minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE,
@@ -100,7 +107,7 @@ public class microphone extends Activity implements IMicrophone {
                 minBufferSize);
     }
 
-    public void runAgain(){
+    public void runAgain() {
         mediaRecorder = new MediaRecorder();
         mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
@@ -110,13 +117,12 @@ public class microphone extends Activity implements IMicrophone {
     @Override
     public void start() {
         try {
-            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/RapidDisruption");
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/RapidDisruption");
             if (!dir.exists()) {
                 dir.mkdirs();
             }
-            audiofile = new File( dir,"Recording" + sdf.format( new Date(System.currentTimeMillis())) + ".3gpp");
-        }
-        catch(Exception e){
+            audiofile = new File(dir, "Recording" + sdf.format(new Date(System.currentTimeMillis())) + ".3gpp");
+        } catch (Exception e) {
             Log.w("creating file error", e.toString());
         }
 
@@ -141,40 +147,31 @@ public class microphone extends Activity implements IMicrophone {
         }
 
     }
-    public Thread threadCreator(){
-       return  new Thread(new Runnable() {
+
+    public Thread threadCreator() {
+        return new Thread(new Runnable() {
             @Override
             public void run() {
-                while (true) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
+                recorder.startRecording();
 
-                                while (isRecording) {
-                                    int bufferReadResult = recorder.read(buffer, 0,
-                                            buffer.length);
-                                     maxAmplitude = MathCalculations.getDB(bufferReadResult);
-                                     CurrentTickData.micMaxAmpl = maxAmplitude;
+                while (isRecording) {
+                    int bufferReadResult = recorder.read(buffer, 0,
+                            buffer.length);
+                    maxAmplitude = MathCalculations.getDB(bufferReadResult);
+                    CurrentTickData.micMaxAmpl = maxAmplitude;
+                    Log.d("d", buffer[0] +buffer[1] +buffer[2]+  buffer[3]  + "");
 //                                    AudioEvent audioEvent = new AudioEvent(tarsosFormat,
 //                                            bufferReadResult);
 //                                    audioEvent.setFloatBufferWithByteBuffer(buffer);
 //                                    mPercussionOnsetDetector.process(audioEvent);
 
-                                }
-                            recorder.stop();
-                         //   if(isRecording){
-                         //       maxAmplitude = MathCalculations.getDB(mediaRecorder.getMaxAmplitude());
-                         //       CurrentTickData.micMaxAmpl = maxAmplitude;
-                         //       Log.d("AmpliMax", CurrentTickData.micMaxAmpl+ "");
-                         //   }
-                        }
-                    });
-                    try {
-                        Thread.sleep(1);
-                    } catch (Exception e) {
-
-                    }
                 }
+                recorder.stop();
+                //   if(isRecording){
+                //       maxAmplitude = MathCalculations.getDB(mediaRecorder.getMaxAmplitude());
+                //       CurrentTickData.micMaxAmpl = maxAmplitude;
+                //       Log.d("AmpliMax", CurrentTickData.micMaxAmpl+ "");
+                //   }
             }
         });
 
@@ -200,7 +197,6 @@ public class microphone extends Activity implements IMicrophone {
 
 
     }
-
 
 
     @Override
