@@ -51,10 +51,16 @@ import java.sql.Timestamp;
 import java.util.Date;
 
 import be.tarsos.dsp.AudioDispatcher;
+import be.tarsos.dsp.AudioEvent;
+import be.tarsos.dsp.AudioProcessor;
 import be.tarsos.dsp.io.android.AudioDispatcherFactory;
 import be.tarsos.dsp.onsets.OnsetHandler;
+import be.tarsos.dsp.pitch.FFTPitch;
+import be.tarsos.dsp.pitch.PitchDetectionResult;
+import be.tarsos.dsp.util.fft.FFT;
 import be.tarsos.dsp.onsets.PercussionOnsetDetector;
 import edu.example.ssf.mma.R;
+import edu.example.ssf.mma.data.CsvFileWriter;
 import edu.example.ssf.mma.hardwareAdapter.HardwareFactory;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -85,6 +91,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private Button startTimerButton;
     private Boolean isTrackingTime = false;
     private Date beginnOfTrackingTime = null;
+    private static int sample_rate = 22050;
+    private Thread recorderThread;
+    private Date startedRecording;
+    private static AudioDispatcher mDispatcher;
 
 
     @SuppressLint("RestrictedApi")
@@ -148,6 +158,50 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return false;
     }
 
+
+    private void record10SecondsFFTtoCsv() {
+
+        CsvFileWriter.crtFile();
+        final int bufferSize = sample_rate;
+
+
+        final int fftSize = bufferSize / 2;
+
+        mDispatcher.addAudioProcessor(new AudioProcessor() {
+            FFT fft = new FFT(bufferSize);
+            final float[] amplitudes = new float[fftSize];
+
+            @Override
+            public boolean process(AudioEvent audioEvent) {
+                float[] audioBuffer = audioEvent.getFloatBuffer();
+                fft.forwardTransform(audioBuffer);
+                fft.modulus(audioBuffer, amplitudes);
+
+                CsvFileWriter.writeLine(fft, amplitudes, sample_rate);
+
+                Log.d("d", "got audioBuffer");
+
+                long now = (new Date()).getTime();
+                long delta = now - startedRecording.getTime();
+
+                if (delta > 10000) {
+                    CsvFileWriter.closeFile();
+                    mDispatcher.removeAudioProcessor(this);
+                }
+                return true;
+
+            }
+
+            @Override
+            public void processingFinished() {
+
+            }
+        });
+        startedRecording = new Date();
+
+
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -173,6 +227,36 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mToggle.syncState();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        final int bufferSize = sample_rate;
+
+        mDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sample_rate, bufferSize, 0);
+        recorderThread = new Thread(mDispatcher);
+        recorderThread.start();
+
+        record10SecondsFFTtoCsv();
+
+
+        double threshold = 8;
+
+        double sensitivity = 40;
+
+        PercussionOnsetDetector mPercussionDetector = new PercussionOnsetDetector(sample_rate, bufferSize,
+                new OnsetHandler() {
+
+                    @Override
+                    public void handleOnset(double time, double salience) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (setAndCheckForDoubleClap()) {
+                                    toggleTracking();
+                                }
+
+                            }
+                        });
+                        Log.d("clap", "Clap detected!");
+                    }
+                }, sensitivity, threshold);
 
         startTimerButton = findViewById(R.id.startButton);
         startTimerButton.setOnClickListener(new View.OnClickListener() {
@@ -183,29 +267,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
-        AudioDispatcher mDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
-        double threshold = 8;
-        double sensitivity = 40;
-        PercussionOnsetDetector mPercussionDetector = new PercussionOnsetDetector(22050, 1024,
-                new OnsetHandler() {
-
-                    @Override
-                    public void handleOnset(double time, double salience) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                if(setAndCheckForDoubleClap()){
-                                    toggleTracking();
-                                }
-
-                            }
-                        });
-                        Log.d("clap", "Clap detected!");
-                    }
-                }, sensitivity, threshold);
-        mDispatcher.addAudioProcessor(mPercussionDetector);
-        Thread t = new Thread(mDispatcher);
-        t.start();
     }
 
     @Override

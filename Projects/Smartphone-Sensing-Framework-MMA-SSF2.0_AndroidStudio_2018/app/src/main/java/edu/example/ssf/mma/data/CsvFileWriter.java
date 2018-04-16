@@ -22,6 +22,7 @@ import android.os.Environment;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
+import be.tarsos.dsp.util.fft.FFT;
 import edu.example.ssf.mma.config.ConfigApp;
 
 import java.io.BufferedInputStream;
@@ -40,118 +41,109 @@ import java.util.Date;
 /**
  * This class is responsible for creating a new csv File, writing the data into the file and to close it,
  * if the recording has finished.
- * @version 2.0
+ *
  * @author Dionysios Satikidis (dionysios.satikidis@yahoo.de)
- * @version 1.0
  * @author D. Lagamtzis
  * @version 2.0
  */
 
 public class CsvFileWriter {
-	
-	/** Declaration of the attribute for the FileWriter that is used to write into the csv file */
-	private static FileWriter fileWriter;
-	
-	/** Declaration of the String for the separator that is used to separate the incoming sensor data*/
-	private final static String separator = ";";
+
+    /**
+     * Declaration of the attribute for the FileWriter that is used to write into the csv file
+     */
+    private static FileWriter fileWriter;
+
+    /**
+     * Declaration of the String for the separator that is used to separate the incoming sensor data
+     */
+    private final static String separator = ";";
 
 
-	public static String lastFilePath;
+    public static String lastFilePath;
+    private static boolean headerWasWritten;
 
-	/**
-	 * Constructor of the CSVFileWriter class.
-	 */
-	private CsvFileWriter() {
-	}
-	
-	/**
-	 * If there is not already the path to store the files into created, this path will be created.
-	 * A new file will be created here also. The name of the new file will be the current Timestamp.
-	 * If the new file is created, the first line in the file will be: Count; Timestamp; AccX; AccY;
-	 * AccZ; GPS-Alt; GPS-Lon; GPS-Lat; MicMaxAmpl; Acc Vector a
-	 */
+    /**
+     * Constructor of the CSVFileWriter class.
+     */
+    private CsvFileWriter() {
+    }
+
+    /**
+     * If there is not already the path to store the files into created, this path will be created.
+     * A new file will be created here also. The name of the new file will be the current Timestamp.
+     * If the new file is created, the first line in the file will be: Count; Timestamp; AccX; AccY;
+     * AccZ; GPS-Alt; GPS-Lon; GPS-Lat; MicMaxAmpl; Acc Vector a
+     */
     public static void crtFile() {
-    	File outputFile;
-    	String fileName;
-    	
-		fileName = new SimpleDateFormat("yyyy-MM-dd_hh_mm_ss'.csv'").format(new Date());
-		try {
-			File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+ ConfigApp.targetStorageDir);
-			if (!dir.exists()) {
-				dir.mkdirs();
-			}
+        File outputFile;
+        String fileName;
 
-			outputFile = new File( dir,fileName);
-			lastFilePath = outputFile.getPath();
+        fileName = new SimpleDateFormat("yyyy-MM-dd_hh_mm_ss'.csv'").format(new Date());
+        try {
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + ConfigApp.targetStorageDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
 
-			Log.d("creating file", "File Created");
-			fileWriter=new FileWriter(outputFile, true);
-			fileWriter.write("Tick" +separator+
-					"Timestamp"+separator+
-					"AccX"+separator+
-					"AccY"+separator+
-					"AccZ"+separator+
-					"Acc Vector a"+separator+
-					"GPS Altitude"+separator+
-					"GPS Latitude"+separator+
-					"GPS Longitude"+separator+
-					"Mic Amplitude"+separator+
-					"RotationX"+separator+
-					"RotationY"+separator+
-					"RotationZ"+separator+
-					"MagneticX"+separator+
-					"MagneticY"+separator+
-					"MagneticZ"+separator+
-					"Proximity"+separator+
-					"Event"+separator+
-					"\r\n");
-		}
-		catch(Exception e){
-			Log.w("creating file error", e.toString());
-		}
-	}
-	
-    
+            outputFile = new File(dir, fileName);
+            lastFilePath = outputFile.getPath();
+            headerWasWritten = false;
+
+            Log.d("creating file", "File Created");
+            fileWriter = new FileWriter(outputFile, true);
+
+        } catch (Exception e) {
+            Log.w("creating file error", e.toString());
+        }
+    }
+
+
     /**
      * Writes the captured data in the csv file.
-     *
-     * @param timestamp current timestamp
-
      */
-	public static void writeLine(String cnt,
-			String timestamp,
-            String micAmpl,
-			String event
-			) {
-		if (fileWriter==null) {
-			return;
-		}
-		try {
-			fileWriter.write(cnt + separator +
-					timestamp+separator+
-                    micAmpl+separator+
-					event+separator+
-					"\r\n");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-		}
-	}
+    public static void writeLine(FFT fft, float[] amplitudes, int sample_rate) {
+        if (fileWriter == null) {
+            return;
+        }
+        try {
+            // write header if not for current file
+            if (!headerWasWritten) {
+                StringBuilder lineHeader = new StringBuilder();
+                for (int i = 0; i < amplitudes.length; i++) {
+                    lineHeader.append(String.format("%3d Hz", (int) fft.binToHz(i, sample_rate))).append(separator);
+                }
+                fileWriter.write(lineHeader.toString() + "\r\n");
+                headerWasWritten = true;
+            }
 
-	/**
-	 * closes the file after recording has finished.
-	 */
-	public static void closeFile() {
-		if (fileWriter==null) {
-			return;
-		}
-		try {
+            // Write line
+            StringBuilder lineData = new StringBuilder();
+            for (int i = 0; i < amplitudes.length; i++) {
+                lineData.append(String.format("%8.3f", amplitudes[i])).append(separator);
+            }
+            fileWriter.write(lineData.toString() + "\r\n");
 
-			fileWriter.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            //e.printStackTrace();
+        }
+    }
 
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+    /**
+     * closes the file after recording has finished.
+     */
+    public static void closeFile() {
+        if (fileWriter == null) {
+            return;
+        }
+        try {
+
+            fileWriter.close();
+
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 }

@@ -126,12 +126,7 @@ public class StateMachineHandler extends Handler{
 				}
 			else {
 					//Log.d("getAccX", "StateMachineHandler.MainActivity.mmaCallBackBool");
-					// Try with direct usage of sensor data :)
-					CsvFileWriter.writeLine(CurrentTickData.curTick.toString(),
-							CurrentTickData.curTimestamp,
-							CurrentTickData.micMaxAmpl.toString(),
-							CurrentTickData.event
-					);
+
 					//Log.d("Time", CurrentTickData.curTimestamp);
 				}
 		}
