@@ -32,10 +32,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
@@ -46,19 +44,13 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.io.android.AudioDispatcherFactory;
 import be.tarsos.dsp.onsets.OnsetHandler;
 import be.tarsos.dsp.onsets.PercussionOnsetDetector;
 import edu.example.ssf.mma.R;
-import edu.example.ssf.mma.charts.AccChart;
-import edu.example.ssf.mma.config.ConfigApp;
-import edu.example.ssf.mma.data.CsvFileWriter;
 import edu.example.ssf.mma.data.CurrentTickData;
 import edu.example.ssf.mma.google.GoogleAccessor;
 import edu.example.ssf.mma.hardwareAdapter.HardwareFactory;
@@ -86,8 +78,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private TextView textView4;
     private TextView textView5;
     private static TextView textViewActState;
-    private ToggleButton recButton;
-    private Button fileBrowserButton, showChartButton;
+    private Button fileBrowserButton;
 
     //Text View Result
     private String defaultMessage = "Please Choose your Sensor to Display!";
@@ -158,47 +149,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
-        recButton = findViewById(R.id.recMic);
-        recButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (ConfigApp.isSimulation) {
-                    mmaCallBackBool = true;
-                    Log.d("CHECKED", "called");
-                } else {
-                    if (recButton.isChecked()) {
-
-                        stateMachineHandler.startStateMachine();
-                        onClickMicREC();
-                        CsvFileWriter.crtFile();
-                        mmaCallBackBool = true;
-                    } else {
-                        onClickMicREC();
-                        CurrentTickData.resetValues();
-                        CsvFileWriter.closeFile();
-//                        GoogleAccessor.startSaveCsvActivity(CsvFileWriter.lastFilePath);
-                        stateMachineHandler.stopStateMachine();
-                    }
-                }
-            }
-        });
-
-        showChartButton = findViewById(R.id.showChart);
-        showChartButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (t.isAlive()) {
-                    // Do Nothing
-                } else {
-                    t.start();
-                }
-                if (showChartButton.isPressed()) {
-                    Intent intent = new Intent(MainActivity.this, AccChart.class);
-                    startActivity(intent);
-                }
-            }
-        });
-        //Buttons & Toggle Buttons
 
         AudioDispatcher mDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
         double threshold = 8;
@@ -312,25 +262,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             headerTextView.setText(defaultMessage);
             show_hideUI();
 
-        }
-    }
-
-    public void onClickMicREC() {
-        if (recButton.isChecked()) {
-            //Thread
-            if (t.isAlive()) {
-            } else {
-                t.start();
-            }
-            //Sensor
-            HardwareFactory.hwMic.start();
-            Toast.makeText(this, "Aufnahme beginnt", Toast.LENGTH_SHORT).show();
-            Toast.makeText(this, "Datei geöffnet", Toast.LENGTH_LONG).show();
-        } else {
-            //Sensor
-            HardwareFactory.hwMic.stop();
-            Toast.makeText(this, "Aufnahme beendet", Toast.LENGTH_SHORT).show();
-            Toast.makeText(this, "Datei geschlossen", Toast.LENGTH_LONG).show();
         }
     }
 
