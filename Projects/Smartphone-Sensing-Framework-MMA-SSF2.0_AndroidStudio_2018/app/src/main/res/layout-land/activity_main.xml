@@ -32,62 +32,13 @@
             android:id="@+id/fileexplorer"
             android:layout_width="45dp"
             android:layout_height="45dp"
+            android:layout_marginEnd="272dp"
+            android:layout_marginRight="272dp"
+            android:layout_marginTop="24dp"
             android:background="@mipmap/ui_folder"
-            app:layout_constraintBottom_toBottomOf="@+id/recMic"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/recMic"
-            app:layout_constraintTop_toTopOf="@+id/recMic" />
+            app:layout_constraintEnd_toEndOf="@+id/headerTextView"
+            app:layout_constraintTop_toBottomOf="@+id/headerTextView" />
 
-        <ToggleButton
-            android:id="@+id/recMic"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:background="@drawable/button_bg_round"
-            android:padding="15dp"
-            android:textColor="@android:color/white"
-            android:textDirection="locale"
-            android:textIsSelectable="true"
-            android:textOff="REC"
-            android:textOn="REC..."
-            android:textSize="12sp"
-            android:textStyle="bold|italic"
-            app:layout_constraintBottom_toBottomOf="@+id/mmaButton"
-            app:layout_constraintEnd_toStartOf="@+id/fileexplorer"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/mmaButton"
-            app:layout_constraintTop_toTopOf="@+id/mmaButton"
-            app:layout_constraintVertical_bias="0.0" />
-
-
-        <ToggleButton
-            android:id="@+id/mmaButton"
-            android:layout_width="95dp"
-            android:layout_height="55dp"
-            android:background="@drawable/buttonshape"
-            android:text="MMA"
-            android:textColor="@android:color/white"
-            android:textOff="Start MMA"
-            android:textOn="Stop MMA"
-            app:layout_constraintEnd_toStartOf="@+id/recMic"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textViewActState" />
-
-        <ToggleButton
-            android:id="@+id/eventHandler"
-            android:layout_width="110dp"
-            android:layout_height="40dp"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/buttonshape"
-            android:text="Event"
-            android:textColor="@android:color/white"
-            android:textOff="Event Start"
-            android:textOn="Event Stop"
-            app:layout_constraintEnd_toStartOf="@+id/editText"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/mmaButton" />
 
         <TextView
             android:id="@+id/TextOne"
@@ -156,18 +107,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/headerTextView" />
-
-        <EditText
-            android:id="@+id/editText"
-            android:layout_width="160dp"
-            android:layout_height="40dp"
-            android:hint="Type Custom Event"
-            android:singleLine="true"
-            app:layout_constraintBottom_toBottomOf="@+id/eventHandler"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/eventHandler"
-            app:layout_constraintTop_toTopOf="@+id/eventHandler" />
 
         <Button
             android:id="@+id/showChart"
