@@ -23,9 +23,11 @@ package edu.example.ssf.mma.userInterface;
  * This class provides the Main Activity of the application
  * Its only activ responsibility is the management of the UI.
  * Everything else is a passiv responsibility and is management by typical OOP or callbacks
+ *
  * @author D. Lagamtzis
  * @version 2.0
  */
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -49,6 +51,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import be.tarsos.dsp.AudioDispatcher;
+import be.tarsos.dsp.io.android.AudioDispatcherFactory;
+import be.tarsos.dsp.onsets.OnsetHandler;
+import be.tarsos.dsp.onsets.PercussionOnsetDetector;
 import edu.example.ssf.mma.R;
 import edu.example.ssf.mma.charts.AccChart;
 import edu.example.ssf.mma.config.ConfigApp;
@@ -58,7 +64,7 @@ import edu.example.ssf.mma.google.GoogleAccessor;
 import edu.example.ssf.mma.hardwareAdapter.HardwareFactory;
 import edu.example.ssf.mma.timer.StateMachineHandler;
 
-public class MainActivity extends AppCompatActivity implements  NavigationView.OnNavigationItemSelectedListener{
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mToggle;
@@ -70,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
     HardwareFactory hw;
 
     //Permissions Android
-    public  static final int PERMISSIONS_MULTIPLE_REQUEST = 123;
+    public static final int PERMISSIONS_MULTIPLE_REQUEST = 123;
 
     // UI
     private TextView headerTextView;
@@ -91,8 +97,6 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
 
     private StateMachineHandler stateMachineHandler;
     static GoogleAccessor GoogleAccessor;
-
-
 
 
     @SuppressLint("RestrictedApi")
@@ -121,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
 
         setContentView(R.layout.activity_main);
 
-        ActivityCompat.requestPermissions(MainActivity.this, new  String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.RECORD_AUDIO,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_MULTIPLE_REQUEST);
+        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_MULTIPLE_REQUEST);
 
         //UI -- Textviews init
         headerTextView = findViewById(R.id.headerTextView);
@@ -130,13 +134,13 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
         textView2 = findViewById(R.id.TextTwo);
         textView3 = findViewById(R.id.TextThree);
         textView4 = findViewById(R.id.TextFour);
-        textView5 =  findViewById(R.id.TextFive);
-        textViewActState=findViewById(R.id.textViewActState);
+        textView5 = findViewById(R.id.TextFive);
+        textViewActState = findViewById(R.id.textViewActState);
         textViewActState.setText("");
 
         // NavigationView init
         mDrawerLayout = findViewById(R.id.drawerLayout);
-        mToggle = new ActionBarDrawerToggle(this, mDrawerLayout,R.string.open,R.string.close);
+        mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close);
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         mDrawerLayout.addDrawerListener(mToggle);
@@ -149,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
         fileBrowserButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent =  new Intent(MainActivity.this, ListFileActivity.class);
+                Intent intent = new Intent(MainActivity.this, ListFileActivity.class);
                 startActivity(intent);
             }
         });
@@ -158,11 +162,10 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
         recButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(ConfigApp.isSimulation){
-                        mmaCallBackBool = true;
+                if (ConfigApp.isSimulation) {
+                    mmaCallBackBool = true;
                     Log.d("CHECKED", "called");
-                }
-                else {
+                } else {
                     if (recButton.isChecked()) {
 
                         stateMachineHandler.startStateMachine();
@@ -173,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
                         onClickMicREC();
                         CurrentTickData.resetValues();
                         CsvFileWriter.closeFile();
-                        GoogleAccessor.startSaveCsvActivity(CsvFileWriter.lastFilePath);
+//                        GoogleAccessor.startSaveCsvActivity(CsvFileWriter.lastFilePath);
                         stateMachineHandler.stopStateMachine();
                     }
                 }
@@ -184,12 +187,12 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
         showChartButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (t.isAlive()){
+                if (t.isAlive()) {
                     // Do Nothing
+                } else {
+                    t.start();
                 }
-                else{
-                    t.start();}
-                if(showChartButton.isPressed()){
+                if (showChartButton.isPressed()) {
                     Intent intent = new Intent(MainActivity.this, AccChart.class);
                     startActivity(intent);
                 }
@@ -197,22 +200,37 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
         });
         //Buttons & Toggle Buttons
 
+        AudioDispatcher mDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
+        double threshold = 8;
+        double sensitivity = 40;
+        PercussionOnsetDetector mPercussionDetector = new PercussionOnsetDetector(22050, 1024,
+                new OnsetHandler() {
+
+                    @Override
+                    public void handleOnset(double time, double salience) {
+                        Log.d("clap", "Clap detected!");
+                    }
+                }, sensitivity, threshold);
+        mDispatcher.addAudioProcessor(mPercussionDetector);
+        Thread t = new Thread(mDispatcher);
+        t.start();
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[]grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
             case PERMISSIONS_MULTIPLE_REQUEST:
                 //
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Hardware
+                    stateMachineHandler = new StateMachineHandler(this);
                     hw = new HardwareFactory(this);
-                    stateMachineHandler=new StateMachineHandler(this);
                 } else {
                     // Do Nothing
                 }
         }
     }
+
     @Override
     public void onBackPressed() {
         if (this.mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -221,6 +239,7 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
             super.onBackPressed();
         }
     }
+
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
@@ -229,21 +248,22 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
             navigationBool = false;
             onClickUI();
         }
-            if (idOfNavObj == R.id.nav_mic) {
-                headerTextView.setText(R.string.mic);
-                navigationBool = true;
-                onClickUI();
-            }
-            mDrawerLayout.closeDrawer(GravityCompat.START);
-            return true;
+        if (idOfNavObj == R.id.nav_mic) {
+            headerTextView.setText(R.string.mic);
+            navigationBool = true;
+            onClickUI();
         }
+        mDrawerLayout.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         return mToggle.onOptionsItemSelected(item) || super.onOptionsItemSelected(item);
     }
 
-    public static void actState(String state){
+    public static void actState(String state) {
         textViewActState.setText(state);
 
     }
@@ -276,14 +296,14 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
     /** TODO SEPARATE INTO OWN INTERFACE SoC
      *  onClick Handlers for different Sensors + UI (later non textual but graphical )
      */
-    public void onClickUI(){
-        if(navigationBool) {
+    public void onClickUI() {
+        if (navigationBool) {
             //Thread
-            if (t.isAlive()){
+            if (t.isAlive()) {
                 //Do Nothing
+            } else {
+                t.start();
             }
-            else{
-                t.start();}
             // UI
             show_hideUI();
 
@@ -294,37 +314,39 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
 
         }
     }
-    public void onClickMicREC(){
-        if(recButton.isChecked()) {
+
+    public void onClickMicREC() {
+        if (recButton.isChecked()) {
             //Thread
-            if (t.isAlive()){}
-            else{
-                t.start();}
+            if (t.isAlive()) {
+            } else {
+                t.start();
+            }
             //Sensor
             HardwareFactory.hwMic.start();
-            Toast.makeText(this,"Aufnahme beginnt", Toast.LENGTH_SHORT).show();
-            Toast.makeText(this,"Datei geöffnet", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Aufnahme beginnt", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Datei geöffnet", Toast.LENGTH_LONG).show();
         } else {
             //Sensor
             HardwareFactory.hwMic.stop();
-            Toast.makeText(this,"Aufnahme beendet", Toast.LENGTH_SHORT).show();
-            Toast.makeText(this,"Datei geschlossen", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Aufnahme beendet", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Datei geschlossen", Toast.LENGTH_LONG).show();
         }
     }
-    public void show_hideUI(){
-        if(textView1.getVisibility() == View.VISIBLE){
+
+    public void show_hideUI() {
+        if (textView1.getVisibility() == View.VISIBLE) {
             textView1.setVisibility(View.INVISIBLE);
             textView2.setVisibility(View.INVISIBLE);
             textView3.setVisibility(View.INVISIBLE);
             textView4.setVisibility(View.INVISIBLE);
             textView5.setVisibility(View.INVISIBLE);
-        }else if(textView1.getVisibility() == View.INVISIBLE){
+        } else if (textView1.getVisibility() == View.INVISIBLE) {
             textView1.setVisibility(View.VISIBLE);
             textView2.setVisibility(View.VISIBLE);
             textView3.setVisibility(View.VISIBLE);
             textView4.setVisibility(View.VISIBLE);
             textView5.setVisibility(View.VISIBLE);
-
         }
     }
 }

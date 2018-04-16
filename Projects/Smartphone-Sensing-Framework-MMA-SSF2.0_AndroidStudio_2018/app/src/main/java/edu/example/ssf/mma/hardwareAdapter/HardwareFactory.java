@@ -32,57 +32,54 @@ import edu.example.ssf.mma.hardwareAdapter.microphone.microphone;
 /**
  * * Initialises the hardware components and checks if either a simulated or the sensor of the device should be used.
  * A factory for creating Hardware objects.
- * @version 2.0
+ *
  * @author Dionysios Satikidis (dionysios.satikidis@yahoo.de)
- * @version 1.0
  * @author D. Lagamtzis
  * @version 2.0
  */
 
 public class HardwareFactory {
 
-	/**referencing the isSimulation variable to the isSimulation variable from the ConfigApp class. */
-	private static boolean isSimulation = ConfigApp.isSimulation;
-	
-	/** setting the simulated accelerometer to null. */
+    /**
+     * referencing the isSimulation variable to the isSimulation variable from the ConfigApp class.
+     */
+    private static boolean isSimulation = ConfigApp.isSimulation;
 
-	public static IMicrophone hwMic = null;
+    /**
+     * setting the simulated accelerometer to null.
+     */
 
-	/**
-	 * decides if in case of simulated sensors get the data from the CSV file or if using the sensors of the device from the seonsrs itself. 
-	 */
+    public static IMicrophone hwMic = null;
 
-	public HardwareFactory(Context context){
-		if (isSimulation) {
-			Log.d("hwSim" , "simulation fail");
-			CsvFileReader.readFile();
-			Log.d("hwSim" , "simulation readfile");
-		}else {
+    /**
+     * decides if in case of simulated sensors get the data from the CSV file or if using the sensors of the device from the seonsrs itself.
+     */
 
-		getMicrophone(context);
-		Log.d("init?","mic initialized");
+    public HardwareFactory(Context context) {
+        if (isSimulation) {
+            Log.d("hwSim", "simulation fail");
+            CsvFileReader.readFile();
+            Log.d("hwSim", "simulation readfile");
+        } else {
 
-		}
-	}
+            getMicrophone(context);
+            Log.d("init?", "mic initialized");
 
-
-
-	
-
-	
-	/**
-	 * determines if to uses the devices microphone or simulate a microphone
-	 *
-	 * @return either the simulated or the devices microphone
-	 */
-	public static IMicrophone getMicrophone(Context context) {
-		if(isSimulation){
-			hwMic = new microSim();
-		}else{
-			hwMic = new microphone(context);
-		}
-		return hwMic;
-	}
+        }
+    }
 
 
+    /**
+     * determines if to uses the devices microphone or simulate a microphone
+     *
+     * @return either the simulated or the devices microphone
+     */
+    public static IMicrophone getMicrophone(Context context) {
+        if (isSimulation) {
+            hwMic = new microSim();
+        } else {
+            hwMic = new microphone(context);
+        }
+        return hwMic;
+    }
 }

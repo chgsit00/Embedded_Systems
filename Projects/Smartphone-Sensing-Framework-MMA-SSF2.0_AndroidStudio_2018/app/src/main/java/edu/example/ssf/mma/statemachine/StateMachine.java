@@ -80,15 +80,15 @@ public class StateMachine implements IStateMachine, IParentStateMachine{
 
 		
 		if (this.actState instanceof StateUnknown) {
-			Log.d("STATE_MACHINE", "UNKNOWN");
+			//Log.d("STATE_MACHINE", "UNKNOWN");
 			this.nextState=this.unknown;
 		}else if (this.actState instanceof StateRecordingActivity) {
-			Log.d("STATE_MACHINE", "DRIVING");
+			//Log.d("STATE_MACHINE", "DRIVING");
 			/*PushToLosant ptl = new PushToLosant();
 			ptl.pushtoLosant();*/
 			this.nextState=this.unknown;
 		}else if (this.actState instanceof StateListening) {
-			Log.d("STATE_MACHINE", "WALKING");
+			//Log.d("STATE_MACHINE", "WALKING");
 			this.nextState=this.unknown;
 		}
 	}

@@ -21,22 +21,34 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
+import android.media.MediaRecorder;
 import android.os.Environment;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
-
-import edu.example.ssf.mma.data.CurrentTickData;
-import edu.example.ssf.mma.data.MathCalculations;
-import edu.example.ssf.mma.hardwareAdapter.IMicrophone;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import android.media.MediaRecorder;
-import android.media.AudioFormat;
-import android.media.AudioRecord;
+import be.tarsos.dsp.AudioDispatcher;
+import be.tarsos.dsp.AudioEvent;
+import be.tarsos.dsp.AudioProcessor;
+import be.tarsos.dsp.SpectralPeakProcessor;
+import be.tarsos.dsp.io.PipedAudioStream;
+import be.tarsos.dsp.io.TarsosDSPAudioInputStream;
+import be.tarsos.dsp.io.android.AndroidFFMPEGLocator;
+import be.tarsos.dsp.io.android.AudioDispatcherFactory;
+import be.tarsos.dsp.onsets.OnsetHandler;
+import be.tarsos.dsp.onsets.PercussionOnsetDetector;
+import be.tarsos.dsp.pitch.PitchDetectionHandler;
+import be.tarsos.dsp.pitch.PitchDetectionResult;
+import be.tarsos.dsp.pitch.PitchProcessor;
+import edu.example.ssf.mma.data.CurrentTickData;
+import edu.example.ssf.mma.data.MathCalculations;
+import edu.example.ssf.mma.hardwareAdapter.IMicrophone;
 //import be.hogent.tarsos.dsp.AudioEvent;
 //import be.hogent.tarsos.dsp.onsets.PercussionOnsetDetector;
 //import be.hogent.tarsos.dsp.onsets.OnsetHandler;
@@ -48,7 +60,7 @@ import android.media.AudioRecord;
  * @author D. Lagamtzis
  * @version 2.0
  */
-public class microphone extends Activity implements IMicrophone {
+public class microphone extends Activity implements IMicrophone, OnsetHandler {
 
     /**
      * Reference to the media recorder.
@@ -67,10 +79,13 @@ public class microphone extends Activity implements IMicrophone {
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh_mm_ss");
 
     protected Double maxAmplitude = 0.0d;
-
+    private PercussionOnsetDetector mPercussionOnsetDetector;
     private AudioRecord recorder;
     private byte[] buffer;
     static final int SAMPLE_RATE = 8000;
+    private int fftsize = 8192;
+
+    private AudioDispatcher dispatcher;
 
     /**
      * create the new media recorder in order to record the audio.
@@ -105,6 +120,12 @@ public class microphone extends Activity implements IMicrophone {
         recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
                 AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
                 minBufferSize);
+
+        // STEP 2: create detector
+
+        mPercussionOnsetDetector = new PercussionOnsetDetector(SAMPLE_RATE,
+                (minBufferSize / 2), this, 24, 5);
+
     }
 
     public void runAgain() {
@@ -149,30 +170,67 @@ public class microphone extends Activity implements IMicrophone {
     }
 
     public Thread threadCreator() {
+
+
+
         return new Thread(new Runnable() {
             @Override
             public void run() {
-                recorder.startRecording();
+//                recorder.startRecording();
+//
+//                int bufferReadResult = recorder.read(buffer, 0,
+//                        buffer.length);
+//                maxAmplitude = MathCalculations.getDB(bufferReadResult);
+//                CurrentTickData.micMaxAmpl = maxAmplitude;
 
-                while (isRecording) {
-                    int bufferReadResult = recorder.read(buffer, 0,
-                            buffer.length);
-                    maxAmplitude = MathCalculations.getDB(bufferReadResult);
-                    CurrentTickData.micMaxAmpl = maxAmplitude;
-                    Log.d("d", buffer[0] +buffer[1] +buffer[2]+  buffer[3]  + "");
-//                                    AudioEvent audioEvent = new AudioEvent(tarsosFormat,
-//                                            bufferReadResult);
-//                                    audioEvent.setFloatBufferWithByteBuffer(buffer);
-//                                    mPercussionOnsetDetector.process(audioEvent);
+//                AudioDispatcher dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
+//                PitchDetectionHandler pdh = new PitchDetectionHandler() {
+//                    @Override
+//                    public void handlePitch(PitchDetectionResult result, AudioEvent e) {
+//                        final float pitchInHz = result.getPitch();
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                Log.d("d", pitchInHz + "");
+//                            }
+//                        });
+//                    }
+//                };
+//                AudioProcessor p = new PitchProcessor(PitchProcessor.PitchEstimationAlgorithm.YIN, 22050, 1024, pdh);
+//                dispatcher.addAudioProcessor(p);
+//                new Thread(dispatcher, "Audio Dispatcher").start();
 
-                }
-                recorder.stop();
-                //   if(isRecording){
-                //       maxAmplitude = MathCalculations.getDB(mediaRecorder.getMaxAmplitude());
-                //       CurrentTickData.micMaxAmpl = maxAmplitude;
-                //       Log.d("AmpliMax", CurrentTickData.micMaxAmpl+ "");
-                //   }
-            }
+//                PipedAudioStream f = new PipedAudioStream(audiofile.getName());
+//                TarsosDSPAudioInputStream stream = f.getMonoStream(SAMPLE_RATE, 0);
+//                Log.d("d", buffer[0] + buffer[1] + buffer[2] + buffer[3] + "");
+//                int overlap = fftsize - 4096;
+//                final SpectralPeakProcessor spectralPeakFollower = new SpectralPeakProcessor(fftsize, overlap, SAMPLE_RATE);
+//                dispatcher = new AudioDispatcher(stream, fftsize, overlap);
+//
+//                dispatcher.addAudioProcessor(new AudioProcessor() {
+//                    int frameCounter = 0;
+//
+//                    @Override
+//                    public void processingFinished() {
+//
+//                    }
+//
+//                    @Override
+//                    public boolean process(AudioEvent audioEvent) {
+//                        Log.d("d",spectralPeakFollower.getMagnitudes().toString());
+//                        Log.d("d",spectralPeakFollower.getFrequencyEstimates().toString());
+//
+//
+//                        return true;
+//                    }
+//                });
+}
+            //   if(isRecording){
+            //       maxAmplitude = MathCalculations.getDB(mediaRecorder.getMaxAmplitude());
+            //       CurrentTickData.micMaxAmpl = maxAmplitude;
+            //       Log.d("AmpliMax", CurrentTickData.micMaxAmpl+ "");
+            //   }
+
         });
 
     }
@@ -204,4 +262,8 @@ public class microphone extends Activity implements IMicrophone {
         return this.maxAmplitude;
     }
 
+    @Override
+    public void handleOnset(double v, double v1) {
+
+    }
 }
