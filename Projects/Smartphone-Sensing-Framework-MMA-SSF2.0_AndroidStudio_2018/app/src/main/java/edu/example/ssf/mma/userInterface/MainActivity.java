@@ -97,6 +97,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private StateMachineHandler stateMachineHandler;
     static GoogleAccessor GoogleAccessor;
+    private TextView textViewLogs;
 
 
     @SuppressLint("RestrictedApi")
@@ -137,6 +138,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         textView5 = findViewById(R.id.TextFive);
         textViewActState = findViewById(R.id.textViewActState);
         textViewActState.setText("");
+        textViewLogs = findViewById(R.id.textviewLogs);
+        textViewLogs.setText("hello world");
 
         // NavigationView init
         mDrawerLayout = findViewById(R.id.drawerLayout);
