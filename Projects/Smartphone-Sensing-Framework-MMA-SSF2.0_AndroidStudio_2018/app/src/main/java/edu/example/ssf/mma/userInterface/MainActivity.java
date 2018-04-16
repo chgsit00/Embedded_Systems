@@ -55,8 +55,6 @@ import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.AudioProcessor;
 import be.tarsos.dsp.io.android.AudioDispatcherFactory;
 import be.tarsos.dsp.onsets.OnsetHandler;
-import be.tarsos.dsp.pitch.FFTPitch;
-import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.util.fft.FFT;
 import be.tarsos.dsp.onsets.PercussionOnsetDetector;
 import edu.example.ssf.mma.R;
@@ -76,12 +74,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     //Permissions Android
     public static final int PERMISSIONS_MULTIPLE_REQUEST = 123;
 
-    // UI
-    private TextView headerTextView;
-
-    //Text View Result
-    private String defaultMessage = "Please Choose your Sensor to Display!";
-
 
     /**
      * Declaration of the state machine.
@@ -92,9 +84,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private Boolean isTrackingTime = false;
     private Date beginnOfTrackingTime = null;
     private static int sample_rate = 22050;
-    private Thread recorderThread;
     private Date startedRecording;
-    private static AudioDispatcher mDispatcher;
+    private static AudioDispatcher audioDispatcher;
+    private Button recordtoCsvButton;
+    private Button clearLogButton;
+    private boolean isRecordingToCsv = false;
 
 
     @SuppressLint("RestrictedApi")
@@ -112,84 +106,119 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onStart();
     }
 
-    private void onTimeDelta(long delta) {
+    private void inAppLog(final String info) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                CharSequence text = textViewLogs.getText();
+                textViewLogs.setText(text + "\n" + info);
+            }
+        });
+    }
+
+    private void onTrackingActivityStopped(long delta) {
         int seconds = (int) delta / 1000;
         int hours = seconds / 3600;
         int minutes = (seconds % 3600) / 60;
         seconds = (seconds % 3600) % 60;
         String info = "Time tracked - hrs: " + hours + " min: " + minutes + " sec: " + seconds;
-        CharSequence text = textViewLogs.getText();
-        textViewLogs.setText(text + "\n" + info);
+        inAppLog(info);
     }
 
     private void toggleTracking() {
-        Boolean iscurrentlyTracking = this.isTrackingTime;
-        if (iscurrentlyTracking) {
-            startTimerButton.setText("Start Tracking");
+        Boolean isCurrentlyTracking = this.isTrackingTime;
+        if (isCurrentlyTracking) { // Stop tracking
+            startTimerButton.setText("Start\nActivity");
             startTimerButton.setBackgroundColor(Color.parseColor("#FF00CD90"));
             Date now = new Date();
             Timestamp timestampEnd = new Timestamp(now.getTime());
             long diff = timestampEnd.getTime() - this.beginnOfTrackingTime.getTime();
-            onTimeDelta(diff);
-        } else {
-            startTimerButton.setText("End Tracking");
+            onTrackingActivityStopped(diff);
+        } else { // Start tracking
+            startTimerButton.setText("End\nTracking");
             startTimerButton.setBackgroundColor(Color.parseColor("#ff00ff"));
 
             this.beginnOfTrackingTime = new Date();
         }
-        this.isTrackingTime = !iscurrentlyTracking;
+        // toggle flag
+        this.isTrackingTime = !isCurrentlyTracking;
 
     }
 
     private Date lastClapDetected = null;
 
     private Boolean setAndCheckForDoubleClap() {
+        int maxTimeBetweenClapsInMs = 500;
         // init first clap
         if (lastClapDetected == null) {
+            inAppLog("Single Clap detected");
             lastClapDetected = new Date();
             return false;
         }
         // last clap less then 500 ms in the past
-        if (lastClapDetected.getTime() - (new Date()).getTime() < 500) {
+        if (lastClapDetected.getTime() - (new Date()).getTime() < maxTimeBetweenClapsInMs) {
             return true;
         }
         // new first clap
+        inAppLog("Single Clap detected");
         lastClapDetected = new Date();
         return false;
     }
 
 
     private void record10SecondsFFTtoCsv() {
+        if (isRecordingToCsv) return;
+        isRecordingToCsv = true;
 
         CsvFileWriter.crtFile();
         final int bufferSize = sample_rate;
-
-
         final int fftSize = bufferSize / 2;
+        startedRecording = new Date();
 
-        mDispatcher.addAudioProcessor(new AudioProcessor() {
+        audioDispatcher.addAudioProcessor(new AudioProcessor() {
             FFT fft = new FFT(bufferSize);
             final float[] amplitudes = new float[fftSize];
+            int iteration = 0;
 
             @Override
             public boolean process(AudioEvent audioEvent) {
+                iteration++;
                 float[] audioBuffer = audioEvent.getFloatBuffer();
                 fft.forwardTransform(audioBuffer);
                 fft.modulus(audioBuffer, amplitudes);
 
+                // log and display feedback in UI
+                Log.d("d", "got audioBuffer");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        recordtoCsvButton.setText("iteration: " + iteration);
+                    }
+                });
+
+
                 CsvFileWriter.writeLine(fft, amplitudes, sample_rate);
 
-                Log.d("d", "got audioBuffer");
 
+                // end after 10 seconds of recording
                 long now = (new Date()).getTime();
                 long delta = now - startedRecording.getTime();
-
                 if (delta > 10000) {
                     CsvFileWriter.closeFile();
-                    mDispatcher.removeAudioProcessor(this);
-                }
-                return true;
 
+                    // reset text of button
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            isRecordingToCsv = false; // only UI thread accesses that boolean
+                            recordtoCsvButton.setText("record to csv");
+                        }
+                    });
+                    // causes that the audioprocessor will not get called again by the audiodispatcher
+                    audioDispatcher.removeAudioProcessor(this);
+                }
+
+                return true;
             }
 
             @Override
@@ -197,8 +226,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             }
         });
-        startedRecording = new Date();
-
 
     }
 
@@ -207,42 +234,70 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         super.onCreate(savedInstanceState);
 
+        setContentView(R.layout.activity_main);
+
+        ActivityCompat.requestPermissions(MainActivity.this,
+                new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.RECORD_AUDIO,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_EXTERNAL_STORAGE},
+                PERMISSIONS_MULTIPLE_REQUEST);
+
+
+        // setup Audio dispatcher, where AudioProcessors can be added and removed to.
+        final int bufferSize = sample_rate;
+        audioDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sample_rate, bufferSize, 0);
+
+        // run audio dispatcher for the whole time the app is running
+        Thread t = new Thread(audioDispatcher);
+        t.start();
+
+
+        startClapDetector(bufferSize);
+
+
+        // setup log textview
+        textViewLogs = findViewById(R.id.textviewLogs);
+
+        // setup manual toggle button
+        startTimerButton = findViewById(R.id.startButton2);
+        startTimerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                toggleTracking();
+            }
+        });
+
+        // setup record to csv button
+        recordtoCsvButton = findViewById(R.id.recordToCsvButton);
+        recordtoCsvButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                record10SecondsFFTtoCsv();
+            }
+        });
+
+        // setup record to csv button
+        clearLogButton = findViewById(R.id.clearLogButton);
+        clearLogButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                textViewLogs.setText("Logs:");
+            }
+        });
+
+
 //        GoogleAccessor = new GoogleAccessor(this);
 //        GoogleAccessor.signIn();
 
+    }
 
-        setContentView(R.layout.activity_main);
-
-        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_MULTIPLE_REQUEST);
-
-
-        textViewLogs = findViewById(R.id.textviewLogs);
-
-        // NavigationView init
-        mDrawerLayout = findViewById(R.id.drawerLayout);
-        mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close);
-        NavigationView navigationView = findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-        mDrawerLayout.addDrawerListener(mToggle);
-        mToggle.syncState();
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        final int bufferSize = sample_rate;
-
-        mDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sample_rate, bufferSize, 0);
-        recorderThread = new Thread(mDispatcher);
-        recorderThread.start();
-
-        record10SecondsFFTtoCsv();
-
-
+    private void startClapDetector(int bufferSize) {
         double threshold = 8;
-
         double sensitivity = 40;
-
         PercussionOnsetDetector mPercussionDetector = new PercussionOnsetDetector(sample_rate, bufferSize,
                 new OnsetHandler() {
-
                     @Override
                     public void handleOnset(double time, double salience) {
                         runOnUiThread(new Runnable() {
@@ -251,22 +306,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                 if (setAndCheckForDoubleClap()) {
                                     toggleTracking();
                                 }
-
                             }
                         });
                         Log.d("clap", "Clap detected!");
                     }
                 }, sensitivity, threshold);
-
-        startTimerButton = findViewById(R.id.startButton);
-        startTimerButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                toggleTracking();
-            }
-        });
-
+        audioDispatcher.addAudioProcessor(mPercussionDetector);
     }
 
     @Override
@@ -301,7 +346,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             navigationBool = false;
         }
         if (idOfNavObj == R.id.nav_mic) {
-            headerTextView.setText(R.string.mic);
             navigationBool = true;
         }
         mDrawerLayout.closeDrawer(GravityCompat.START);

@@ -19,12 +19,39 @@
 
 
         <Button
-            android:id="@+id/startButton"
+            android:id="@+id/clearLogButton"
+            android:layout_width="133dp"
+            android:layout_height="34dp"
+            android:layout_marginTop="440dp"
+            android:background="@color/colorPrimary"
+            android:text="clear"
+            android:textColor="@color/colorStroke"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/recordToCsvButton"
+            android:layout_width="186dp"
+            android:layout_height="63dp"
+            android:layout_marginTop="16dp"
+            android:background="@color/colorPrimary"
+            android:text="record to csv"
+            android:textColor="@color/colorStroke"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/startButton2"
             android:layout_width="194dp"
             android:layout_height="114dp"
             android:layout_marginTop="100dp"
             android:background="#FF00CD90"
-            android:text="Start Tracking"
+            android:lineSpacingExtra="12sp"
+            android:text="Start \nActivity"
             android:textColor="@color/colorStroke"
             android:textSize="24sp"
             app:layout_constraintEnd_toEndOf="parent"
