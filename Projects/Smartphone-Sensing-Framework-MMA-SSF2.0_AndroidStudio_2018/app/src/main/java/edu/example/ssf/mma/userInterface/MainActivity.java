@@ -32,6 +32,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -46,21 +47,20 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.sql.Timestamp;
+import java.util.Date;
+
 import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.io.android.AudioDispatcherFactory;
 import be.tarsos.dsp.onsets.OnsetHandler;
 import be.tarsos.dsp.onsets.PercussionOnsetDetector;
 import edu.example.ssf.mma.R;
-import edu.example.ssf.mma.data.CurrentTickData;
-import edu.example.ssf.mma.google.GoogleAccessor;
 import edu.example.ssf.mma.hardwareAdapter.HardwareFactory;
-import edu.example.ssf.mma.timer.StateMachineHandler;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mToggle;
-    public static boolean mmaCallBackBool = false;
     private boolean navigationBool = false;
     private int idOfNavObj;
 
@@ -72,30 +72,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     // UI
     private TextView headerTextView;
-    private TextView textView1;
-    private TextView textView2;
-    private TextView textView3;
-    private TextView textView4;
-    private TextView textView5;
-    private static TextView textViewActState;
-    private Button fileBrowserButton;
 
     //Text View Result
     private String defaultMessage = "Please Choose your Sensor to Display!";
 
 
-    /** Declaration of the state machine. */
+    /**
+     * Declaration of the state machine.
+     */
 
-    private StateMachineHandler stateMachineHandler;
-    static GoogleAccessor GoogleAccessor;
     private TextView textViewLogs;
+    private Button startTimerButton;
+    private Boolean isTrackingTime = false;
+    private Date beginnOfTrackingTime = null;
 
 
     @SuppressLint("RestrictedApi")
     @Override
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        GoogleAccessor.actvityResultHanlder(requestCode, resultCode, data);
+        //GoogleAccessor.actvityResultHanlder(requestCode, resultCode, data);
 
     }
 
@@ -106,31 +102,67 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onStart();
     }
 
+    private void onTimeDelta(long delta) {
+        int seconds = (int) delta / 1000;
+        int hours = seconds / 3600;
+        int minutes = (seconds % 3600) / 60;
+        seconds = (seconds % 3600) % 60;
+        String info = "Time tracked - hrs: " + hours + " min: " + minutes + " sec: " + seconds;
+        CharSequence text = textViewLogs.getText();
+        textViewLogs.setText(text + "\n" + info);
+    }
+
+    private void toggleTracking() {
+        Boolean iscurrentlyTracking = this.isTrackingTime;
+        if (iscurrentlyTracking) {
+            startTimerButton.setText("Start Tracking");
+            startTimerButton.setBackgroundColor(Color.parseColor("#FF00CD90"));
+            Date now = new Date();
+            Timestamp timestampEnd = new Timestamp(now.getTime());
+            long diff = timestampEnd.getTime() - this.beginnOfTrackingTime.getTime();
+            onTimeDelta(diff);
+        } else {
+            startTimerButton.setText("End Tracking");
+            startTimerButton.setBackgroundColor(Color.parseColor("#ff00ff"));
+
+            this.beginnOfTrackingTime = new Date();
+        }
+        this.isTrackingTime = !iscurrentlyTracking;
+
+    }
+
+    private Date lastClapDetected = null;
+
+    private Boolean setAndCheckForDoubleClap() {
+        // init first clap
+        if (lastClapDetected == null) {
+            lastClapDetected = new Date();
+            return false;
+        }
+        // last clap less then 500 ms in the past
+        if (lastClapDetected.getTime() - (new Date()).getTime() < 500) {
+            return true;
+        }
+        // new first clap
+        lastClapDetected = new Date();
+        return false;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
 
-        GoogleAccessor = new GoogleAccessor(this);
-        GoogleAccessor.signIn();
+//        GoogleAccessor = new GoogleAccessor(this);
+//        GoogleAccessor.signIn();
 
 
         setContentView(R.layout.activity_main);
 
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSIONS_MULTIPLE_REQUEST);
 
-        //UI -- Textviews init
-        headerTextView = findViewById(R.id.headerTextView);
-        headerTextView.setText(defaultMessage);
-        textView1 = findViewById(R.id.TextOne);
-        textView2 = findViewById(R.id.TextTwo);
-        textView3 = findViewById(R.id.TextThree);
-        textView4 = findViewById(R.id.TextFour);
-        textView5 = findViewById(R.id.TextFive);
-        textViewActState = findViewById(R.id.textViewActState);
-        textViewActState.setText("");
+
         textViewLogs = findViewById(R.id.textviewLogs);
-        textViewLogs.setText("hello world");
 
         // NavigationView init
         mDrawerLayout = findViewById(R.id.drawerLayout);
@@ -142,16 +174,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 
-        //Buttons & Toggle Buttons
-        fileBrowserButton = findViewById(R.id.fileexplorer);
-        fileBrowserButton.setOnClickListener(new View.OnClickListener() {
+        startTimerButton = findViewById(R.id.startButton);
+        startTimerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, ListFileActivity.class);
-                startActivity(intent);
+
+                toggleTracking();
             }
         });
-
 
         AudioDispatcher mDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
         double threshold = 8;
@@ -161,6 +191,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                     @Override
                     public void handleOnset(double time, double salience) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if(setAndCheckForDoubleClap()){
+                                    toggleTracking();
+                                }
+
+                            }
+                        });
                         Log.d("clap", "Clap detected!");
                     }
                 }, sensitivity, threshold);
@@ -176,7 +215,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 //
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Hardware
-                    stateMachineHandler = new StateMachineHandler(this);
+                    //stateMachineHandler = new StateMachineHandler(this);
                     hw = new HardwareFactory(this);
                 } else {
                     // Do Nothing
@@ -199,12 +238,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         idOfNavObj = item.getItemId();
         if (navigationBool) {
             navigationBool = false;
-            onClickUI();
         }
         if (idOfNavObj == R.id.nav_mic) {
             headerTextView.setText(R.string.mic);
             navigationBool = true;
-            onClickUI();
         }
         mDrawerLayout.closeDrawer(GravityCompat.START);
         return true;
@@ -217,70 +254,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public static void actState(String state) {
-        textViewActState.setText(state);
+        //  textViewActState.setText(state);
 
     }
 
-    Thread t = new Thread(new Runnable() {
-        @Override
-        public void run() {
-            while (true) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (idOfNavObj == R.id.nav_mic) {
-                            textView2.setVisibility(View.INVISIBLE);
-                            textView3.setVisibility(View.INVISIBLE);
-                            textView4.setVisibility(View.INVISIBLE);
-                            textView5.setVisibility(View.INVISIBLE);
-                            textView1.setText("Max Aplitude : " + CurrentTickData.micMaxAmpl);
-                        }
-                    }
-                });
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception e) {
-                    // Do Nothing
-                }
-            }
-        }
-    });
 
-    /** TODO SEPARATE INTO OWN INTERFACE SoC
-     *  onClick Handlers for different Sensors + UI (later non textual but graphical )
-     */
-    public void onClickUI() {
-        if (navigationBool) {
-            //Thread
-            if (t.isAlive()) {
-                //Do Nothing
-            } else {
-                t.start();
-            }
-            // UI
-            show_hideUI();
-
-        } else {
-            //UI
-            headerTextView.setText(defaultMessage);
-            show_hideUI();
-
-        }
-    }
-
-    public void show_hideUI() {
-        if (textView1.getVisibility() == View.VISIBLE) {
-            textView1.setVisibility(View.INVISIBLE);
-            textView2.setVisibility(View.INVISIBLE);
-            textView3.setVisibility(View.INVISIBLE);
-            textView4.setVisibility(View.INVISIBLE);
-            textView5.setVisibility(View.INVISIBLE);
-        } else if (textView1.getVisibility() == View.INVISIBLE) {
-            textView1.setVisibility(View.VISIBLE);
-            textView2.setVisibility(View.VISIBLE);
-            textView3.setVisibility(View.VISIBLE);
-            textView4.setVisibility(View.VISIBLE);
-            textView5.setVisibility(View.VISIBLE);
-        }
-    }
 }
