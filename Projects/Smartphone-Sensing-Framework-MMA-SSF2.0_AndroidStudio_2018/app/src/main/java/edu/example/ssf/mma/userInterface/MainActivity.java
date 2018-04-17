@@ -248,12 +248,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         final int bufferSize = sample_rate;
         audioDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sample_rate, bufferSize, 0);
 
+        startClapDetector(1024);
+
         // run audio dispatcher for the whole time the app is running
         Thread t = new Thread(audioDispatcher);
         t.start();
 
 
-        startClapDetector(bufferSize);
 
 
         // setup log textview
