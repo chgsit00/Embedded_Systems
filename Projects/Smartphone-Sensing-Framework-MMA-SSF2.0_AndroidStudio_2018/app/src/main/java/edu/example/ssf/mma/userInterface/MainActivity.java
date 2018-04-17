@@ -137,7 +137,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else { // Start tracking
             startTimerButton.setText("End\nTracking");
             startTimerButton.setBackgroundColor(Color.parseColor("#ff00ff"));
-
             this.beginnOfTrackingTime = new Date();
         }
         // toggle flag
