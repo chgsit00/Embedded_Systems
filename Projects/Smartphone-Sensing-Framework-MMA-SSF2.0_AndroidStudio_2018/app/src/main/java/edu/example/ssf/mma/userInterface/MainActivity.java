@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private Date beginnOfTrackingTime = null;
     private static int sample_rate = 22050;
     private Date startedRecording;
-    private static AudioDispatcher audioDispatcher;
+    private static AudioDispatcher audioCsvDispatcher;
     private Button recordtoCsvButton;
     private Button clearLogButton;
     private boolean isRecordingToCsv = false;
@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private Date lastClapDetected = null;
 
     private Boolean setAndCheckForDoubleClap() {
-        int maxTimeBetweenClapsInMs = 500;
+        int maxTimeBetweenClapsInMs = 1000;
         // init first clap
         if (lastClapDetected == null) {
             inAppLog("Single Clap detected");
@@ -156,7 +156,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             return false;
         }
         // last clap less then 500 ms in the past
-        if (lastClapDetected.getTime() - (new Date()).getTime() < maxTimeBetweenClapsInMs) {
+        if ((new Date()).getTime() - lastClapDetected.getTime() < maxTimeBetweenClapsInMs) {
+            inAppLog("Double Clap detected");
+            lastClapDetected = null;
             return true;
         }
         // new first clap
@@ -168,64 +170,74 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void record10SecondsFFTtoCsv() {
         if (isRecordingToCsv) return;
-        isRecordingToCsv = true;
+        try {
+            isRecordingToCsv = true;
+            recordtoCsvButton.setText("RECORDING ...");
 
-        CsvFileWriter.crtFile();
-        final int bufferSize = sample_rate;
-        final int fftSize = bufferSize / 2;
-        startedRecording = new Date();
+            CsvFileWriter.crtFile();
+            final int bufferSize = sample_rate * 3;
+            final int fftSize = bufferSize / 2;
+            startedRecording = new Date();
 
-        audioDispatcher.addAudioProcessor(new AudioProcessor() {
-            FFT fft = new FFT(bufferSize);
-            final float[] amplitudes = new float[fftSize];
-            int iteration = 0;
-
-            @Override
-            public boolean process(AudioEvent audioEvent) {
-                iteration++;
-                float[] audioBuffer = audioEvent.getFloatBuffer();
-                fft.forwardTransform(audioBuffer);
-                fft.modulus(audioBuffer, amplitudes);
-
-                // log and display feedback in UI
-                Log.d("d", "got audioBuffer");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        recordtoCsvButton.setText("iteration: " + iteration);
-                    }
-                });
+            // setup Audio dispatcher, where AudioProcessors for Csv write can be added and removed to.
 
 
-                CsvFileWriter.writeLine(fft, amplitudes, sample_rate);
+            audioCsvDispatcher.addAudioProcessor(new AudioProcessor() {
+                FFT fft = new FFT(bufferSize);
+                final float[] amplitudes = new float[fftSize];
+                int iteration = 0;
 
+                @Override
+                public boolean process(AudioEvent audioEvent) {
+                    iteration++;
+                    float[] audioBuffer = audioEvent.getFloatBuffer();
+                    fft.forwardTransform(audioBuffer);
+                    fft.modulus(audioBuffer, amplitudes);
 
-                // end after 10 seconds of recording
-                long now = (new Date()).getTime();
-                long delta = now - startedRecording.getTime();
-                if (delta > 10000) {
-                    CsvFileWriter.closeFile();
-
-                    // reset text of button
+                    // log and display feedback in UI
+                    Log.d("d", "got audioBuffer");
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            isRecordingToCsv = false; // only UI thread accesses that boolean
-                            recordtoCsvButton.setText("record to csv");
+                            recordtoCsvButton.setText("Done ");
                         }
                     });
-                    // causes that the audioprocessor will not get called again by the audiodispatcher
-                    audioDispatcher.removeAudioProcessor(this);
+
+
+                    CsvFileWriter.writeLine(fft, amplitudes, sample_rate);
+
+
+                    // end after 10 seconds of recording
+                    //long now = (new Date()).getTime();
+                    //long delta = now - startedRecording.getTime();
+                    if (true) {
+                        CsvFileWriter.closeFile();
+
+                        // reset text of button
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                isRecordingToCsv = false; // only UI thread accesses that boolean
+                                recordtoCsvButton.setText("record to csv");
+                            }
+                        });
+                        // causes that the audioprocessor will not get called again by the audiodispatcher
+                        audioCsvDispatcher.removeAudioProcessor(this);
+                    }
+
+                    return true;
                 }
 
-                return true;
-            }
+                @Override
+                public void processingFinished() {
 
-            @Override
-            public void processingFinished() {
+                }
+            });
 
-            }
-        });
+        } catch (Exception ex) {
+            isRecordingToCsv = false;
+        }
+
 
     }
 
@@ -245,17 +257,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 PERMISSIONS_MULTIPLE_REQUEST);
 
 
-        // setup Audio dispatcher, where AudioProcessors can be added and removed to.
+        // COMMENT IN THIS LINE, IF YOU WANT TO LISTEN FOR CLAPS!
+        //SetupPercussionDetector();
         final int bufferSize = sample_rate;
-        audioDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sample_rate, bufferSize, 0);
+        audioCsvDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sample_rate, bufferSize * 3, 0);
 
-        startClapDetector(1024);
-
-        // run audio dispatcher for the whole time the app is running
-        Thread t = new Thread(audioDispatcher);
-        t.start();
-
-
+        Thread tCsv = new Thread(audioCsvDispatcher);
+        tCsv.start();
 
 
         // setup log textview
@@ -294,6 +302,32 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
+    private void SetupPercussionDetector() {
+        AudioDispatcher mDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
+        double threshold = 8;
+        double sensitivity = 40;
+        PercussionOnsetDetector mPercussionDetector = new PercussionOnsetDetector(22050, 1024,
+                new OnsetHandler() {
+
+                    @Override
+                    public void handleOnset(double time, double salience) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (setAndCheckForDoubleClap()) {
+                                    toggleTracking();
+                                }
+
+                            }
+                        });
+                        Log.d("clap", "Clap detected!");
+                    }
+                }, sensitivity, threshold);
+        mDispatcher.addAudioProcessor(mPercussionDetector);
+        Thread t = new Thread(mDispatcher);
+        t.start();
+    }
+
     private void startClapDetector(int bufferSize) {
         double threshold = 8;
         double sensitivity = 40;
@@ -312,7 +346,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         Log.d("clap", "Clap detected!");
                     }
                 }, sensitivity, threshold);
-        audioDispatcher.addAudioProcessor(mPercussionDetector);
+        audioCsvDispatcher.addAudioProcessor(mPercussionDetector);
     }
 
     @Override
