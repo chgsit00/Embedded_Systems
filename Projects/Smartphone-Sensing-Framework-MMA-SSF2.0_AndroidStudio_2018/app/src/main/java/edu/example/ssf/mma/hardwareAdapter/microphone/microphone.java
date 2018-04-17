@@ -30,9 +30,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import edu.example.ssf.mma.hardwareAdapter.IMicrophone;
-//import be.hogent.tarsos.dsp.AudioEvent;
-//import be.hogent.tarsos.dsp.onsets.PercussionOnsetDetector;
-//import be.hogent.tarsos.dsp.onsets.OnsetHandler;
 
 /**
  * Initialising the Microphone of the Smartphone and get the data output form
