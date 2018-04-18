@@ -68,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private boolean navigationBool = false;
     private int idOfNavObj;
 
+
     // Init HW-Factory
     HardwareFactory hw;
 
@@ -84,11 +85,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private Boolean isTrackingTime = false;
     private Date beginnOfTrackingTime = null;
     private static int sample_rate = 22050;
+    //private static int sample_rate = 5000;
     private Date startedRecording;
     private static AudioDispatcher audioCsvDispatcher;
     private Button recordtoCsvButton;
     private Button clearLogButton;
     private boolean isRecordingToCsv = false;
+    private int bufferSizeMic = sample_rate * 3;
+    private int bufferSizeFFT = sample_rate ;
 
 
     @SuppressLint("RestrictedApi")
@@ -154,7 +158,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             lastClapDetected = new Date();
             return false;
         }
-        // last clap less then 500 ms in the past
+        // last clap less then n ms in the past
         if ((new Date()).getTime() - lastClapDetected.getTime() < maxTimeBetweenClapsInMs) {
             inAppLog("Double Clap detected");
             lastClapDetected = null;
@@ -171,19 +175,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (isRecordingToCsv) return;
         try {
             isRecordingToCsv = true;
-            recordtoCsvButton.setText("RECORDING ...");
+            recordtoCsvButton.setText("Recording ...");
 
             CsvFileWriter.crtFile();
-            final int bufferSize = sample_rate * 3;
-            final int fftSize = bufferSize / 2;
             startedRecording = new Date();
 
             // setup Audio dispatcher, where AudioProcessors for Csv write can be added and removed to.
 
 
             audioCsvDispatcher.addAudioProcessor(new AudioProcessor() {
-                FFT fft = new FFT(bufferSize);
-                final float[] amplitudes = new float[fftSize];
+                FFT fft = new FFT(bufferSizeFFT);
+                final float[] amplitudes = new float[bufferSizeFFT];
                 int iteration = 0;
 
                 @Override
@@ -198,7 +200,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            recordtoCsvButton.setText("Done ");
+                            recordtoCsvButton.setText("Writting ... ");
                         }
                     });
 
@@ -257,12 +259,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 
         // COMMENT IN THIS LINE, IF YOU WANT TO LISTEN FOR CLAPS!
-        //SetupPercussionDetector();
-        final int bufferSize = sample_rate;
-        audioCsvDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sample_rate, bufferSize * 3, 0);
+        SetupPercussionDetector();
+        //audioCsvDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sample_rate, bufferSizeMic, 0);
 
-        Thread tCsv = new Thread(audioCsvDispatcher);
-        tCsv.start();
+        //Thread tCsv = new Thread(audioCsvDispatcher);
+        //tCsv.start();
 
 
         // setup log textview

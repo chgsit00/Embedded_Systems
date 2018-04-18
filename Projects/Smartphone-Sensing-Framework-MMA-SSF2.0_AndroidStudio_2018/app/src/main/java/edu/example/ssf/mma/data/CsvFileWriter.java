@@ -107,10 +107,12 @@ public class CsvFileWriter {
             return;
         }
         try {
+            int maxHz = 5000;
             // write header if not for current file
             if (!headerWasWritten) {
                 StringBuilder lineHeader = new StringBuilder();
                 for (int i = 0; i < amplitudes.length; i++) {
+                    if(i > maxHz) break;
                     lineHeader.append(String.format("%3d Hz", (int) fft.binToHz(i, sample_rate))).append(separator);
                 }
                 fileWriter.write(lineHeader.toString() + "\r\n");
@@ -120,6 +122,7 @@ public class CsvFileWriter {
             // Write line
             StringBuilder lineData = new StringBuilder();
             for (int i = 0; i < amplitudes.length; i++) {
+                if(i > maxHz) break;
                 lineData.append(String.format("%8.3f", amplitudes[i])).append(separator);
             }
             fileWriter.write(lineData.toString() + "\r\n");

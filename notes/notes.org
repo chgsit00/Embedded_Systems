@@ -1,0 +1,79 @@
+
+#+LaTeX_CLASS: networkassignment 
+
+* Introduction
+
+** The Idea
+A timer tracker app, that can record the spend time on an activity.
+To start the activity many there exists many was to activate and deactivate the
+time tracker. For example by simply clicking a button, clapping twice, being at
+an specifiy geo location, gestures by moving the smartphone around.
+Also a separate device (the board) can also be utilized to toggle the time tracker.
+Also different activity functions should be able to map to specificy activities
+that the user of the app can define on their own.
+
+** The Deep Dive
+We want to detect double claps.
+
+
+
+
+* First Prototype (Board)
+Explain the state of what we achieved with the board and what problems arised.
+** Setup
+- show board setup
+- some code we used
+
+
+
+** Analysis
+- Diagrams that we had in the presentation. Explain problems.
+
+Sample rate to low, memory problems, not so easy to debug ( no way of stepping
+through code, no UI for giving fast feedback only LEDs)
+** Conclusion
+ move to android.
+
+
+
+* Second Prototype (Android)
+We moved to Android, used the open source Tarsos library that gives us methods to transform
+the audio signal from android to FFT.
+Higher Samplerates of 20k is not a problems.
+
+** Analysis Sound
+- Showing frequence diagrams of recorded tests ( Claps, Husten, Schnippen, Reden)
+- Explain characteristics and approaches for solving the problem of only
+  detecting the claps.
+
+*** Prove that our android FFT works
+ frequenceVonYoutube1200hz.csv
+
+[[./imgs/ytpicture.png]]
+
+[[./imgs/yttestandroid.png]]
+
+https://www.youtube.com/watch?v=qNf9nzvnd1k
+
+* Implementation (Android)
+- UI Screenshots
+- How we implemented the clap detection in the end.
+
+** Evalutation
+- How reliable can our implementation detect clap.
+- Show statistics by trying it out (maybe in different environments (loud,
+  silent rooms, outdoors)
+
+* Conclusion
+** Current State
+Refer to to evalution part above. State how difficult this was and the time
+needed to try out more advanced solutions (AI) was not enough.
+
+** Project Future 
+ Maybe add more debug functionallity inside the App, be able to not only tweak
+ parameters inside the code, but also with UI Controls inside the app.
+
+
+
+* Referernces
+http://www.klangfuzzis.de/showthread.php?679817-Was-hat-in-etwa-wie-viel-hz
