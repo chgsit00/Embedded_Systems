@@ -1,6 +1,7 @@
 
 #+LaTeX_CLASS: networkassignment 
 
+* Abstract
 * Introduction
 
 ** The Idea
@@ -41,7 +42,11 @@ We moved to Android, used the open source Tarsos library that gives us methods t
 the audio signal from android to FFT.
 Higher Samplerates of 20k is not a problems.
 
-** Analysis Sound
+
+- tarsos bib for fft.
+- android api with tarsos to get CSV.
+
+** Analysis Sound (tony hat es schon gemacht)
 - Showing frequence diagrams of recorded tests ( Claps, Husten, Schnippen, Reden)
 - Explain characteristics and approaches for solving the problem of only
   detecting the claps.
@@ -55,25 +60,57 @@ Higher Samplerates of 20k is not a problems.
 
 https://www.youtube.com/watch?v=qNf9nzvnd1k
 
-* Implementation (Android)
+
 - UI Screenshots
 - How we implemented the clap detection in the end.
+  
+** Implementation for Dataanalysis
+Some code was soley written for getting data out of the app and was removed for
+later for the final app.
 
+*** TODO Google Drive Docu
+*** CSV Button
+- why we removed it / android API doesn't allow to have to AudioDispatcher run
+  at the same time ( but for CSV we want to record 3 seconds and not only less
+  than a second, for detection we don't want to wait 3 seconds for getting a FFT)
+
+** Implementation
+- Tarsos library ( for FFT ) 
+*** Architecture (aus mainAc raus, UML)
+*** State-machine
+    - First Clap detected --- clap ---> Start 1 sec timer
+    - timer running --- 1 sec elapsed --> Listening
+    - timer running --- clap ---> Second Clap
 ** Evalutation
 - How reliable can our implementation detect clap.
-- Show statistics by trying it out (maybe in different environments (loud,
-  silent rooms, outdoors)
+- Benchmark
+  - How many time false positives where detected ( 20x husten, 20x schnipsen, 20 klatschen)
+  - Show statistics by trying it out (maybe in different environments (loud,
+    silent rooms, outdoors)
+
+
 
 * Conclusion
 ** Current State
 Refer to to evalution part above. State how difficult this was and the time
 needed to try out more advanced solutions (AI) was not enough.
 
-** Project Future 
+** Project Outlook 
  Maybe add more debug functionallity inside the App, be able to not only tweak
  parameters inside the code, but also with UI Controls inside the app.
+
+ Whistling detection instead of clapping.
+
+
+
+
 
 
 
 * Referernces
 http://www.klangfuzzis.de/showthread.php?679817-Was-hat-in-etwa-wie-viel-hz
+
+* Aufgaben für uns noch:
+*** TODO Tarsos Code rausnkopieren
+*** TODO State-machine implement
+*** TODO Fork vom android und unsere repo reinkopieren

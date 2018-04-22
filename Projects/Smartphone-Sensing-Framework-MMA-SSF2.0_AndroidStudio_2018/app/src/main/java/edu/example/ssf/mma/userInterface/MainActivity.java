@@ -59,6 +59,7 @@ import be.tarsos.dsp.util.fft.FFT;
 import be.tarsos.dsp.onsets.PercussionOnsetDetector;
 import edu.example.ssf.mma.R;
 import edu.example.ssf.mma.data.CsvFileWriter;
+import edu.example.ssf.mma.hardwareAdapter.ClapDetector;
 import edu.example.ssf.mma.hardwareAdapter.HardwareFactory;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -257,9 +258,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         Manifest.permission.READ_EXTERNAL_STORAGE},
                 PERMISSIONS_MULTIPLE_REQUEST);
 
-
-        // COMMENT IN THIS LINE, IF YOU WANT TO LISTEN FOR CLAPS!
-        SetupPercussionDetector();
+        ClapDetector clapDetector = new ClapDetector( new OnsetHandler() {
+            @Override
+            public void handleOnset(double time, double salience) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (setAndCheckForDoubleClap()) {
+                            toggleTracking();
+                        }
+                    }
+                });
+                Log.d("clap", "Clap detected!");
+            }
+        });
         //audioCsvDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sample_rate, bufferSizeMic, 0);
 
         //Thread tCsv = new Thread(audioCsvDispatcher);
@@ -302,31 +314,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
-    private void SetupPercussionDetector() {
-        AudioDispatcher mDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0);
-        double threshold = 8;
-        double sensitivity = 40;
-        PercussionOnsetDetector mPercussionDetector = new PercussionOnsetDetector(22050, 1024,
-                new OnsetHandler() {
 
-                    @Override
-                    public void handleOnset(double time, double salience) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (setAndCheckForDoubleClap()) {
-                                    toggleTracking();
-                                }
-
-                            }
-                        });
-                        Log.d("clap", "Clap detected!");
-                    }
-                }, sensitivity, threshold);
-        mDispatcher.addAudioProcessor(mPercussionDetector);
-        Thread t = new Thread(mDispatcher);
-        t.start();
-    }
 
     private void startClapDetector(int bufferSize) {
         double threshold = 8;
