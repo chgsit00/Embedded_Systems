@@ -61,6 +61,7 @@ import edu.example.ssf.mma.R;
 import edu.example.ssf.mma.data.CsvFileWriter;
 import edu.example.ssf.mma.hardwareAdapter.ClapDetector;
 import edu.example.ssf.mma.hardwareAdapter.HardwareFactory;
+import edu.example.ssf.mma.statemachine.StateMachine;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -94,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private boolean isRecordingToCsv = false;
     private int bufferSizeMic = sample_rate * 3;
     private int bufferSizeFFT = sample_rate ;
+    private StateMachine stateMachine;
 
 
     @SuppressLint("RestrictedApi")
@@ -149,27 +151,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
-    private Date lastClapDetected = null;
 
-    private Boolean setAndCheckForDoubleClap() {
-        int maxTimeBetweenClapsInMs = 1000;
-        // init first clap
-        if (lastClapDetected == null) {
-            inAppLog("Single Clap detected");
-            lastClapDetected = new Date();
-            return false;
-        }
-        // last clap less then n ms in the past
-        if ((new Date()).getTime() - lastClapDetected.getTime() < maxTimeBetweenClapsInMs) {
-            inAppLog("Double Clap detected");
-            lastClapDetected = null;
-            return true;
-        }
-        // new first clap
-        inAppLog("Single Clap detected");
-        lastClapDetected = new Date();
-        return false;
-    }
 
 
     private void record10SecondsFFTtoCsv() {
@@ -248,6 +230,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         super.onCreate(savedInstanceState);
 
+        this.stateMachine = new StateMachine();
+        this.stateMachine
+
         setContentView(R.layout.activity_main);
 
         ActivityCompat.requestPermissions(MainActivity.this,
@@ -258,20 +243,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         Manifest.permission.READ_EXTERNAL_STORAGE},
                 PERMISSIONS_MULTIPLE_REQUEST);
 
-        ClapDetector clapDetector = new ClapDetector( new OnsetHandler() {
-            @Override
-            public void handleOnset(double time, double salience) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (setAndCheckForDoubleClap()) {
-                            toggleTracking();
-                        }
-                    }
-                });
-                Log.d("clap", "Clap detected!");
-            }
-        });
+
         //audioCsvDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sample_rate, bufferSizeMic, 0);
 
         //Thread tCsv = new Thread(audioCsvDispatcher);
