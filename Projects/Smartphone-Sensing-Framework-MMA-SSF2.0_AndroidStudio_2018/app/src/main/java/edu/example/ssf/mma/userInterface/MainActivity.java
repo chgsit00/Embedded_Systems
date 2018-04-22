@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private Button clearLogButton;
     private boolean isRecordingToCsv = false;
     private int bufferSizeMic = sample_rate * 3;
-    private int bufferSizeFFT = sample_rate ;
+    private int bufferSizeFFT = sample_rate;
     private StateMachine stateMachine;
 
 
@@ -133,25 +133,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void toggleTracking() {
-        Boolean isCurrentlyTracking = this.isTrackingTime;
-        if (isCurrentlyTracking) { // Stop tracking
-            startTimerButton.setText("Start\nActivity");
-            startTimerButton.setBackgroundColor(Color.parseColor("#FF00CD90"));
-            Date now = new Date();
-            Timestamp timestampEnd = new Timestamp(now.getTime());
-            long diff = timestampEnd.getTime() - this.beginnOfTrackingTime.getTime();
-            onTrackingActivityStopped(diff);
-        } else { // Start tracking
-            startTimerButton.setText("End\nTracking");
-            startTimerButton.setBackgroundColor(Color.parseColor("#ff00ff"));
-            this.beginnOfTrackingTime = new Date();
-        }
-        // toggle flag
-        this.isTrackingTime = !isCurrentlyTracking;
+        runOnUiThread(() -> {
+            Boolean isCurrentlyTracking = this.isTrackingTime;
+            if (isCurrentlyTracking) { // Stop tracking
+                startTimerButton.setText("Start\nActivity");
+                startTimerButton.setBackgroundColor(Color.parseColor("#FF00CD90"));
+                Date now = new Date();
+                Timestamp timestampEnd = new Timestamp(now.getTime());
+                long diff = timestampEnd.getTime() - this.beginnOfTrackingTime.getTime();
+                onTrackingActivityStopped(diff);
+            } else { // Start tracking
+                startTimerButton.setText("End\nTracking");
+                startTimerButton.setBackgroundColor(Color.parseColor("#ff00ff"));
+                this.beginnOfTrackingTime = new Date();
+            }
+            // toggle flag
+            this.isTrackingTime = !isCurrentlyTracking;
+        });
 
     }
-
-
 
 
     private void record10SecondsFFTtoCsv() {
@@ -230,8 +230,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         super.onCreate(savedInstanceState);
 
-        this.stateMachine = new StateMachine();
-        this.stateMachine.onWriteToAppLog = (s) -> inAppLog(s);
 
         setContentView(R.layout.activity_main);
 
@@ -245,6 +243,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 
         //audioCsvDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sample_rate, bufferSizeMic, 0);
+
+        this.stateMachine = new StateMachine();
+        this.stateMachine.onWriteToAppLog = (s) -> inAppLog(s);
+        this.stateMachine.onToggle = () -> toggleTracking();
+
 
         //Thread tCsv = new Thread(audioCsvDispatcher);
         //tCsv.start();
@@ -286,28 +289,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
-
-
-    private void startClapDetector(int bufferSize) {
-        double threshold = 8;
-        double sensitivity = 40;
-        PercussionOnsetDetector mPercussionDetector = new PercussionOnsetDetector(sample_rate, bufferSize,
-                new OnsetHandler() {
-                    @Override
-                    public void handleOnset(double time, double salience) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (setAndCheckForDoubleClap()) {
-                                    toggleTracking();
-                                }
-                            }
-                        });
-                        Log.d("clap", "Clap detected!");
-                    }
-                }, sensitivity, threshold);
-        audioCsvDispatcher.addAudioProcessor(mPercussionDetector);
-    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
