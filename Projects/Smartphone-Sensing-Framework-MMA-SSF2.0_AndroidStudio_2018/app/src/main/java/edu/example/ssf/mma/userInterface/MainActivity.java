@@ -231,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onCreate(savedInstanceState);
 
         this.stateMachine = new StateMachine();
-        this.stateMachine
+        this.stateMachine.onWriteToAppLog = (s) -> inAppLog(s);
 
         setContentView(R.layout.activity_main);
 
