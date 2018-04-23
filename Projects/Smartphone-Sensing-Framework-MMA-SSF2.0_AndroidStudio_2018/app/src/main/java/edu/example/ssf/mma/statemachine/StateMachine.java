@@ -21,12 +21,11 @@ package edu.example.ssf.mma.statemachine;
 
 import android.os.Build;
 import android.support.annotation.RequiresApi;
-import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.function.Consumer;
 
-import be.tarsos.dsp.onsets.OnsetHandler;
 import edu.example.ssf.mma.hardwareAdapter.ClapDetector;
 
 
@@ -39,9 +38,12 @@ import edu.example.ssf.mma.hardwareAdapter.ClapDetector;
  * @version 1.0
  */
 
-public class StateMachine implements IStateMachine, IParentStateMachine {
+
+public class StateMachine implements IStateMachine {
 
     private final ClapDetector clapDetector;
+    private final StateTrackingPreCondition trackingPrecondition;
+    private final StateStoppingPreCondition stoppingPrecondition;
     /**
      * state of the state machine when not in the state "WALKING" or "DRIVING". Also the state the state machine is in at the start.
      */
@@ -50,29 +52,22 @@ public class StateMachine implements IStateMachine, IParentStateMachine {
     /**
      * state of the state machine when not in the state "UNKNOWN" or "DRIVING".
      */
-    private AbstractState walking = null;
+    private AbstractState idle = null;
 
     /**
      * state of the state machine when not in the state "UNKNOWN" or "WALKING".
      */
-    private AbstractState driving = null;
+    private AbstractState trackingActivity = null;
 
     /**
      * setting the abstract state in the beginning to null.
      */
     private AbstractState actState = null;
 
-    /**
-     * setting the next state in the beginning to null.
-     */
-    private AbstractState nextState = null;
-
-    /**
-     * setting the label of the state in the beginning to "N.N."
-     */
-    private String stateLabel = "N.N.";
 
     private Date lastClapDetected = null;
+
+    private ArrayList<Transition> transitions = new ArrayList<>();
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private Boolean setAndCheckForDoubleClap() {
@@ -97,27 +92,33 @@ public class StateMachine implements IStateMachine, IParentStateMachine {
 
     public Consumer<String> onWriteToAppLog = null;
 
-    public Runnable onToggle = null;
-
     /**
      * Instantiates a new state machine.
      */
+    @RequiresApi(api = Build.VERSION_CODES.N)
     public StateMachine() {
-        this.unknown = new StateUnknown(this);
-        this.walking = new StateIdle(this);
-        this.driving = new StateTrackingActivity(this);
+        this.idle = new StateIdle();
+        this.trackingActivity = new StateTrackingActivity();
+        this.trackingPrecondition = new StateTrackingPreCondition();
+        this.stoppingPrecondition = new StateStoppingPreCondition();
 
-        this.actState = this.unknown;
-        this.nextState = this.unknown;
-        this.clapDetector = new ClapDetector(new OnsetHandler() {
-            @RequiresApi(api = Build.VERSION_CODES.N)
-            @Override
-            public void handleOnset(double time, double salience) {
-                if (setAndCheckForDoubleClap()) {
-                    onToggle.run();
-                }
-                Log.d("clap", "Clap detected!");
-            }
+        transitions.add(new Transition(idle, Action.CLAP_DETECTED, trackingPrecondition));
+        transitions.add(new Transition(trackingPrecondition, Action.CLAP_DETECTED, trackingActivity, () -> {
+            Trackings.startNewTracking();
+        }));
+        transitions.add(new Transition(trackingActivity, Action.CLAP_DETECTED, stoppingPrecondition));
+        transitions.add(new Transition(stoppingPrecondition, Action.CLAP_DETECTED, idle, () -> {
+            Trackings.endTracking();
+        }));
+
+        transitions.add(new Transition(trackingPrecondition, Action.PRECONDITION_TIMEOUT, idle));
+        transitions.add(new Transition(stoppingPrecondition, Action.PRECONDITION_TIMEOUT, trackingActivity));
+
+
+        this.actState = this.idle;
+        this.clapDetector = new ClapDetector((time, salience) -> {
+            transitionCheck(Action.CLAP_DETECTED);
+            onWriteToAppLog.accept("Clap detected");
         });
     }
 
@@ -127,69 +128,18 @@ public class StateMachine implements IStateMachine, IParentStateMachine {
      */
 
     @Override
-    public void transisionCheck() {
-        /**
-         * Calculate absolute value of the acceleration vector a
-         */
+    public void transitionCheck(Action trigger) {
 
+        for (Transition transition : transitions) {
+            if (transition.trigger.equals(trigger) && transition.preState.equals(actState)) {
 
-        if (this.actState instanceof StateUnknown) {
-            //Log.d("STATE_MACHINE", "UNKNOWN");
-            this.nextState = this.unknown;
-        } else if (this.actState instanceof StateTrackingActivity) {
-            //Log.d("STATE_MACHINE", "DRIVING");
-			/*PushToLosant ptl = new PushToLosant();
-			ptl.pushtoLosant();*/
-            this.nextState = this.unknown;
-        } else if (this.actState instanceof StateIdle) {
-            //Log.d("STATE_MACHINE", "WALKING");
-            this.nextState = this.unknown;
+                this.actState = transition.newState;
+                transition.doTransitionAction();
+                return;
+            }
         }
     }
 
-    /**
-     * changes the label text to another state.
-     */
-    @Override
-    public void stateCheck() {
-        this.actState.doit();
-        if (this.actState != this.nextState) {
-            this.actState.exit();
-            this.nextState.entry();
-        }
-        this.actState = this.nextState;
-        this.stateLabel = this.nextState.getStateName();
-    }
 
-
-    /**
-     * gets the state label
-     *
-     * @return returns the statelabel
-     */
-    @Override
-    public String getStateLabel() {
-        return this.stateLabel;
-    }
-
-    /**
-     * sets the state label.
-     *
-     * @param label uesd String to set StateLabel to "TEST"
-     */
-    @Override
-    public void setStateLabel(String label) {
-        this.stateLabel = label;
-    }
-
-    /**
-     * Instantiates the actual state, the next state and the state label.
-     */
-    @Override
-    public void initStateMachine() {
-        this.actState = this.unknown;
-        this.nextState = this.unknown;
-        this.stateLabel = this.unknown.getStateName();
-    }
 }
 

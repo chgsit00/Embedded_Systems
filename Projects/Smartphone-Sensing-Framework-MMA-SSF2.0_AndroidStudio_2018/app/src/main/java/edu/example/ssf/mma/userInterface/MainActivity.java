@@ -33,8 +33,10 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
@@ -62,6 +64,7 @@ import edu.example.ssf.mma.data.CsvFileWriter;
 import edu.example.ssf.mma.hardwareAdapter.ClapDetector;
 import edu.example.ssf.mma.hardwareAdapter.HardwareFactory;
 import edu.example.ssf.mma.statemachine.StateMachine;
+import edu.example.ssf.mma.statemachine.Trackings;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -85,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private TextView textViewLogs;
     private Button startTimerButton;
     private Boolean isTrackingTime = false;
-    private Date beginnOfTrackingTime = null;
+
     private static int sample_rate = 22050;
     //private static int sample_rate = 5000;
     private Date startedRecording;
@@ -114,43 +117,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void inAppLog(final String info) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                CharSequence text = textViewLogs.getText();
-                textViewLogs.setText(text + "\n" + info);
-            }
+        runOnUiThread(() -> {
+            CharSequence text = textViewLogs.getText();
+            textViewLogs.setText(text + "\n" + info);
         });
     }
 
     private void onTrackingActivityStopped(long delta) {
-        int seconds = (int) delta / 1000;
-        int hours = seconds / 3600;
-        int minutes = (seconds % 3600) / 60;
-        seconds = (seconds % 3600) % 60;
-        String info = "Time tracked - hrs: " + hours + " min: " + minutes + " sec: " + seconds;
-        inAppLog(info);
-    }
 
-    private void toggleTracking() {
         runOnUiThread(() -> {
-            Boolean isCurrentlyTracking = this.isTrackingTime;
-            if (isCurrentlyTracking) { // Stop tracking
-                startTimerButton.setText("Start\nActivity");
-                startTimerButton.setBackgroundColor(Color.parseColor("#FF00CD90"));
-                Date now = new Date();
-                Timestamp timestampEnd = new Timestamp(now.getTime());
-                long diff = timestampEnd.getTime() - this.beginnOfTrackingTime.getTime();
-                onTrackingActivityStopped(diff);
-            } else { // Start tracking
-                startTimerButton.setText("End\nTracking");
-                startTimerButton.setBackgroundColor(Color.parseColor("#ff00ff"));
-                this.beginnOfTrackingTime = new Date();
-            }
-            // toggle flag
-            this.isTrackingTime = !isCurrentlyTracking;
+            startTimerButton.setText("Clap to start\nActivity");
+            startTimerButton.setBackgroundColor(Color.parseColor("#FF00CD90"));
+            int seconds = (int) delta / 1000;
+            int hours = seconds / 3600;
+            int minutes = (seconds % 3600) / 60;
+            seconds = (seconds % 3600) % 60;
+            String info = "Time tracked - hrs: " + hours + " min: " + minutes + " sec: " + seconds;
+            inAppLog(info);
         });
-
     }
 
 
@@ -225,14 +209,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-
-
         setContentView(R.layout.activity_main);
-
         ActivityCompat.requestPermissions(MainActivity.this,
                 new String[]{
                         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -242,29 +224,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 PERMISSIONS_MULTIPLE_REQUEST);
 
 
-        //audioCsvDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sample_rate, bufferSizeMic, 0);
-
-        this.stateMachine = new StateMachine();
-        this.stateMachine.onWriteToAppLog = (s) -> inAppLog(s);
-        this.stateMachine.onToggle = () -> toggleTracking();
-
-
-        //Thread tCsv = new Thread(audioCsvDispatcher);
-        //tCsv.start();
-
-
         // setup log textview
         textViewLogs = findViewById(R.id.textviewLogs);
 
-        // setup manual toggle button
-        startTimerButton = findViewById(R.id.startButton2);
-        startTimerButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                toggleTracking();
-            }
-        });
-
+        this.startTimerButton = findViewById(R.id.startButton2);
         // setup record to csv button
         recordtoCsvButton = findViewById(R.id.recordToCsvButton);
         recordtoCsvButton.setOnClickListener(new View.OnClickListener() {
@@ -284,8 +247,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         });
 
 
+        //audioCsvDispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sample_rate, bufferSizeMic, 0);
+        Trackings.onNewDelta = (delta) -> onTrackingActivityStopped(delta);
+        Trackings.onStartNewTracking = () -> onActivityStarted();
+
+        this.stateMachine = new StateMachine();
+        this.stateMachine.onWriteToAppLog = (s) -> inAppLog(s);
+
+
+        //Thread tCsv = new Thread(audioCsvDispatcher);
+        //tCsv.start();
+
+
 //        GoogleAccessor = new GoogleAccessor(this);
 //        GoogleAccessor.signIn();
+
+    }
+
+    private void onActivityStarted() {
+        runOnUiThread(() -> {
+            startTimerButton.setText("End\nTracking");
+            startTimerButton.setBackgroundColor(Color.parseColor("#ff00ff"));
+        });
 
     }
 

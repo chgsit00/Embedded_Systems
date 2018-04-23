@@ -30,23 +30,6 @@ package edu.example.ssf.mma.statemachine;
  */
 
 public class StateTrackingActivity extends AbstractState{
-	
-	/**
-	 * Instantiates a new state driving.
-	 *
-	  * @param stateMachine Callback-reference to the IParentStateMachine
-	 */
-	public StateTrackingActivity(IParentStateMachine stateMachine) {
-		super("TRACKING", stateMachine);
-	}
-	
-	/**
-	 * Override-method.
-	 */
-	@Override
-	public void doit() {
-		getParentStateMachine().setStateLabel(this.getStateName());
-	}
 
 	/**
 	 *  auto-generated method.

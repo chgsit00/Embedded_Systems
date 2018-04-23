@@ -31,26 +31,8 @@ package edu.example.ssf.mma.statemachine;
 
 public class StateIdle extends AbstractState{
 	
-	/**
-	 * Instantiates a new state walking.
-	 *
-	 * @param stateMachine Callback-reference to the IParentStateMachine
-	 */
-	public StateIdle(IParentStateMachine stateMachine) {
-		super("IDLE", stateMachine);
-	}
-	
-	/**
-	 * Override-method.  Gets the StateName and sets the State Label
-	 * */
-	@Override
-	public void doit() {
-		getParentStateMachine().setStateLabel(this.getStateName());
-	}
 
-	/**
-	 *  auto-generated method.
-	 */
+
 	@Override
 	public void entry() {
 		// TODO Auto-generated method stub

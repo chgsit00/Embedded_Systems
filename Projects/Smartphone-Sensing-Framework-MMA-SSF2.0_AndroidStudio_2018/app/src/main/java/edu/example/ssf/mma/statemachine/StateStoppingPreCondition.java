@@ -1,15 +1,9 @@
 package edu.example.ssf.mma.statemachine;
 
+import android.os.Build;
+import android.support.annotation.RequiresApi;
+
 public class StateStoppingPreCondition extends AbstractState {
-
-    public StateStoppingPreCondition(IParentStateMachine stateMachine){
-        super("STOPPINGPRECONDITION", stateMachine);
-    }
-
-    @Override
-    public void doit() {
-        getParentStateMachine().setStateLabel(this.getStateName());
-    }
 
     @Override
     public void entry() {

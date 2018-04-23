@@ -29,66 +29,6 @@ package edu.example.ssf.mma.statemachine;
 
 public abstract class AbstractState {
 
-	/** Declaration of the string used as a statename. */
-	private String stateName;
-	
-	/** DEclaration of the parent state machine. */
-	private IParentStateMachine parentStateMachine;
-	
-	
-	/**
-	 * Gets the parent state machine.
-	 *
-	 * @return the parentStateMachine
-	 */
-	public IParentStateMachine getParentStateMachine() {
-		return parentStateMachine;
-	}
-
-	/**
-	 * Sets the parent state machine.
-	 *
-	 * @param parentStateMachine callback reference to the IParentStateMachine
-	 */
-	public void setParentStateMachine(IParentStateMachine parentStateMachine) {
-		this.parentStateMachine = parentStateMachine;
-	}
-
-	/**
-	 * Instantiates a new abstract state.
-	 *
-	 * @param name the state name
-	 * @param parentStateMachine callback-reference to the IParentStateMachine
-	 */
-	public AbstractState(String name, IParentStateMachine parentStateMachine) {
-		this.stateName=name;
-		this.parentStateMachine=parentStateMachine;
-	}
-	
-	/**
-	 * Gets the state name.
-	 *
-	 * @return the state name
-	 */
-	public String getStateName() {
-		return stateName;
-	}
-
-	/**
-	 * Sets the state name.
-	 *
-	 * @param stateName the new state name
-	 */
-	public void setStateName(String stateName) {
-		this.stateName = stateName;
-	}
-	
-	/**
-	 * abstract method doit()
-	 * is executed while being in a concrete state.
-	 */
-	public abstract void doit();
-	
 	/**
 	 * abstract method entry()
 	 * is executed while entering a concrete state.
