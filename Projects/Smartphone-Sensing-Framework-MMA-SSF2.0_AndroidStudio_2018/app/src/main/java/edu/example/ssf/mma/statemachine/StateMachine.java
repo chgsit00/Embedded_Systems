@@ -27,8 +27,6 @@ import java.util.Date;
 import java.util.function.Consumer;
 
 import be.tarsos.dsp.onsets.OnsetHandler;
-import edu.example.ssf.mma.data.CurrentTickData;
-import edu.example.ssf.mma.data.MathCalculations;
 import edu.example.ssf.mma.hardwareAdapter.ClapDetector;
 
 
@@ -106,8 +104,8 @@ public class StateMachine implements IStateMachine, IParentStateMachine {
      */
     public StateMachine() {
         this.unknown = new StateUnknown(this);
-        this.walking = new StateListening(this);
-        this.driving = new StateRecordingActivity(this);
+        this.walking = new StateIdle(this);
+        this.driving = new StateTrackingActivity(this);
 
         this.actState = this.unknown;
         this.nextState = this.unknown;
@@ -138,12 +136,12 @@ public class StateMachine implements IStateMachine, IParentStateMachine {
         if (this.actState instanceof StateUnknown) {
             //Log.d("STATE_MACHINE", "UNKNOWN");
             this.nextState = this.unknown;
-        } else if (this.actState instanceof StateRecordingActivity) {
+        } else if (this.actState instanceof StateTrackingActivity) {
             //Log.d("STATE_MACHINE", "DRIVING");
 			/*PushToLosant ptl = new PushToLosant();
 			ptl.pushtoLosant();*/
             this.nextState = this.unknown;
-        } else if (this.actState instanceof StateListening) {
+        } else if (this.actState instanceof StateIdle) {
             //Log.d("STATE_MACHINE", "WALKING");
             this.nextState = this.unknown;
         }

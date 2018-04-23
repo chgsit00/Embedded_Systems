@@ -29,15 +29,15 @@ package edu.example.ssf.mma.statemachine;
  * @version 1.0
  */
 
-public class StateListening extends AbstractState{
+public class StateIdle extends AbstractState{
 	
 	/**
 	 * Instantiates a new state walking.
 	 *
 	 * @param stateMachine Callback-reference to the IParentStateMachine
 	 */
-	public StateListening(IParentStateMachine stateMachine) {
-		super("WALKING", stateMachine);
+	public StateIdle(IParentStateMachine stateMachine) {
+		super("IDLE", stateMachine);
 	}
 	
 	/**

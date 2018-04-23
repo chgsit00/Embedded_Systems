@@ -29,15 +29,15 @@ package edu.example.ssf.mma.statemachine;
  * @version 1.0
  */
 
-public class StateRecordingActivity extends AbstractState{
+public class StateTrackingActivity extends AbstractState{
 	
 	/**
 	 * Instantiates a new state driving.
 	 *
 	  * @param stateMachine Callback-reference to the IParentStateMachine
 	 */
-	public StateRecordingActivity(IParentStateMachine stateMachine) {
-		super("DRIVING", stateMachine);
+	public StateTrackingActivity(IParentStateMachine stateMachine) {
+		super("TRACKING", stateMachine);
 	}
 	
 	/**
