@@ -24,6 +24,8 @@ import android.support.annotation.RequiresApi;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.function.Consumer;
 
 import edu.example.ssf.mma.Tracker.Trackings;
@@ -43,6 +45,8 @@ public class StateMachine implements IStateMachine {
     private Date lastClapDetected = null;
     private ArrayList<Transition> transitions = new ArrayList<>();
 
+    private Timer timer = new Timer();
+
     @RequiresApi(api = Build.VERSION_CODES.N)
     public StateMachine() {
         AbstractState idle = new StateIdle();
@@ -50,12 +54,20 @@ public class StateMachine implements IStateMachine {
         AbstractState trackingPrecondition = new StateTrackingPreCondition();
         AbstractState stoppingPrecondition = new StateStoppingPreCondition();
 
-        transitions.add(new Transition(idle, Action.CLAP_DETECTED, trackingPrecondition));
+        transitions.add(new Transition(idle, Action.CLAP_DETECTED, trackingPrecondition, () -> {
+            startTimeoutTimer();
+        }));
+
         transitions.add(new Transition(trackingPrecondition, Action.CLAP_DETECTED, trackingActivity, () -> {
+            safeCancelTimeoutTimer();
             Trackings.startNewTracking();
         }));
-        transitions.add(new Transition(trackingActivity, Action.CLAP_DETECTED, stoppingPrecondition));
+
+        transitions.add(new Transition(trackingActivity, Action.CLAP_DETECTED, stoppingPrecondition, () -> {
+            startTimeoutTimer();
+        }));
         transitions.add(new Transition(stoppingPrecondition, Action.CLAP_DETECTED, idle, () -> {
+            safeCancelTimeoutTimer();
             Trackings.endTracking();
         }));
 
@@ -69,6 +81,25 @@ public class StateMachine implements IStateMachine {
             onWriteToAppLog.accept("Clap detected");
             transitionCheck(Action.CLAP_DETECTED);
         });
+    }
+
+    private void startTimeoutTimer() {
+        safeCancelTimeoutTimer();
+        timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                transitionCheck(Action.PRECONDITION_TIMEOUT);
+            }
+        }, 1000);
+    }
+    private void safeCancelTimeoutTimer(){
+        try{
+            timer.cancel();
+        }
+        catch(Exception ex){
+
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
