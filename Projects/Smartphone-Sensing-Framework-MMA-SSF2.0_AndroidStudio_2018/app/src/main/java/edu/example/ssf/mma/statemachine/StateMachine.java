@@ -26,48 +26,50 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.function.Consumer;
 
+import edu.example.ssf.mma.Tracker.Trackings;
 import edu.example.ssf.mma.hardwareAdapter.ClapDetector;
-
-
-// TODO: Auto-generated Javadoc
-
-/**
- * Interprets the accelerometer-data and determines in which state the user is at the moment.
- *
- * @author Dionysios Satikidis (dionysios.satikidis@gmail.com)
- * @version 1.0
- */
 
 
 public class StateMachine implements IStateMachine {
 
-    private final ClapDetector clapDetector;
-    private final StateTrackingPreCondition trackingPrecondition;
-    private final StateStoppingPreCondition stoppingPrecondition;
+    public Consumer<String> onWriteToAppLog = null;
     /**
      * state of the state machine when not in the state "WALKING" or "DRIVING". Also the state the state machine is in at the start.
      */
-    private AbstractState unknown = null;
-
-    /**
-     * state of the state machine when not in the state "UNKNOWN" or "DRIVING".
-     */
-    private AbstractState idle = null;
-
-    /**
-     * state of the state machine when not in the state "UNKNOWN" or "WALKING".
-     */
-    private AbstractState trackingActivity = null;
-
     /**
      * setting the abstract state in the beginning to null.
      */
     private AbstractState actState = null;
-
-
     private Date lastClapDetected = null;
-
     private ArrayList<Transition> transitions = new ArrayList<>();
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public StateMachine() {
+        AbstractState idle = new StateIdle();
+        AbstractState trackingActivity = new StateTrackingActivity();
+        AbstractState trackingPrecondition = new StateTrackingPreCondition();
+        AbstractState stoppingPrecondition = new StateStoppingPreCondition();
+
+        transitions.add(new Transition(idle, Action.CLAP_DETECTED, trackingPrecondition));
+        transitions.add(new Transition(trackingPrecondition, Action.CLAP_DETECTED, trackingActivity, () -> {
+            Trackings.startNewTracking();
+        }));
+        transitions.add(new Transition(trackingActivity, Action.CLAP_DETECTED, stoppingPrecondition));
+        transitions.add(new Transition(stoppingPrecondition, Action.CLAP_DETECTED, idle, () -> {
+            Trackings.endTracking();
+        }));
+
+        transitions.add(new Transition(trackingPrecondition, Action.PRECONDITION_TIMEOUT, idle));
+        transitions.add(new Transition(stoppingPrecondition, Action.PRECONDITION_TIMEOUT, trackingActivity));
+
+
+        this.actState = idle;
+
+        new ClapDetector((time, salience) -> {
+            onWriteToAppLog.accept("Clap detected");
+            transitionCheck(Action.CLAP_DETECTED);
+        });
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private Boolean setAndCheckForDoubleClap() {
@@ -89,43 +91,6 @@ public class StateMachine implements IStateMachine {
         lastClapDetected = new Date();
         return false;
     }
-
-    public Consumer<String> onWriteToAppLog = null;
-
-    /**
-     * Instantiates a new state machine.
-     */
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    public StateMachine() {
-        this.idle = new StateIdle();
-        this.trackingActivity = new StateTrackingActivity();
-        this.trackingPrecondition = new StateTrackingPreCondition();
-        this.stoppingPrecondition = new StateStoppingPreCondition();
-
-        transitions.add(new Transition(idle, Action.CLAP_DETECTED, trackingPrecondition));
-        transitions.add(new Transition(trackingPrecondition, Action.CLAP_DETECTED, trackingActivity, () -> {
-            Trackings.startNewTracking();
-        }));
-        transitions.add(new Transition(trackingActivity, Action.CLAP_DETECTED, stoppingPrecondition));
-        transitions.add(new Transition(stoppingPrecondition, Action.CLAP_DETECTED, idle, () -> {
-            Trackings.endTracking();
-        }));
-
-        transitions.add(new Transition(trackingPrecondition, Action.PRECONDITION_TIMEOUT, idle));
-        transitions.add(new Transition(stoppingPrecondition, Action.PRECONDITION_TIMEOUT, trackingActivity));
-
-
-        this.actState = this.idle;
-        this.clapDetector = new ClapDetector((time, salience) -> {
-            transitionCheck(Action.CLAP_DETECTED);
-            onWriteToAppLog.accept("Clap detected");
-        });
-    }
-
-
-    /**
-     * This method checks if a transition change has occurred and if the state label has to be changed.
-     */
 
     @Override
     public void transitionCheck(Action trigger) {

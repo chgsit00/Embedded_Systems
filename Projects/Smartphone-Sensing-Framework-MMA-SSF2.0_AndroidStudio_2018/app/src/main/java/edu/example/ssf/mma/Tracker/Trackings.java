@@ -1,4 +1,4 @@
-package edu.example.ssf.mma.statemachine;
+package edu.example.ssf.mma.Tracker;
 
 import android.graphics.Color;
 import android.os.Build;

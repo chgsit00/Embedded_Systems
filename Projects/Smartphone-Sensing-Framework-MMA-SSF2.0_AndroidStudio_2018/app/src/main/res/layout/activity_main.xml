@@ -51,7 +51,7 @@
             android:layout_marginTop="100dp"
             android:background="#FF00CD90"
             android:lineSpacingExtra="12sp"
-            android:text="Start \nActivity"
+            android:text="Clap to start\nActivity"
             android:textColor="@color/colorStroke"
             android:textSize="24sp"
             app:layout_constraintEnd_toEndOf="parent"
