@@ -1,4 +1,4 @@
-% Created 2018-04-18 Wed 13:28
+% Created 2018-04-24 Tue 20:44
 % Intended LaTeX compiler: pdflatex
 \documentclass
 [
@@ -30,31 +30,38 @@
 \tableofcontents
 
 
+\chapter{Abstract}
+\label{sec:orgf5e4737}
 \chapter{Introduction}
-\label{sec:org9d46027}
-
+\label{sec:orgef98480}
 \section{The Idea}
-\label{sec:orgb55156f}
-A timer tracker app, that can record the spend time on an activity.
-To start the activity many there exists many was to activate and deactivate the
-time tracker. For example by simply clicking a button, clapping twice, being at
-an specifiy geo location, gestures by moving the smartphone around.
-Also a separate device (the board) can also be utilized to toggle the time tracker.
-Also different activity functions should be able to map to specificy activities
-that the user of the app can define on their own.
+\label{sec:org9600a05}
 
-\section{The Deep Dive}
-\label{sec:org697384d}
-We want to detect double claps.
+The Digital Life Tracking App is designed to enable users to track their daily tasks and the time spent on them.
+To make it more convenient to trigger an activity, the start and end of an activity may be triggered in different ways. 
+Possible activation mechanisms could be:
+\begin{itemize}
+\item Two claps
+\item moving the smartphone in a certain way (gestures)
+\item activation based on GPS position
+\item pressing a button
+\end{itemize}
 
+Users should be able to define their own activities and select an activation function from a list and assign it to one of their activities.
+The user should then be able to display his history in form of charts.
+A separate device (particle photon board) could also be used to trigger a specific activity.
+
+\subsection{The Deep Dive}
+\label{sec:org7e5fafa}
+For the prototype in the context of the assigment we decided to focus mainly on the detection of double clapping as an activity trigger.
 
 
 
 \chapter{First Prototype (Board)}
-\label{sec:org47f91d8}
+\label{sec:orgc97a297}
 Explain the state of what we achieved with the board and what problems arised.
 \section{Setup}
-\label{sec:orge38cbbc}
+\label{sec:org03748f5}
 \begin{itemize}
 \item show board setup
 \item some code we used
@@ -63,7 +70,7 @@ Explain the state of what we achieved with the board and what problems arised.
 
 
 \section{Analysis}
-\label{sec:org3a095f8}
+\label{sec:org0663f3c}
 \begin{itemize}
 \item Diagrams that we had in the presentation. Explain problems.
 \end{itemize}
@@ -71,69 +78,118 @@ Explain the state of what we achieved with the board and what problems arised.
 Sample rate to low, memory problems, not so easy to debug ( no way of stepping
 through code, no UI for giving fast feedback only LEDs)
 \section{Conclusion}
-\label{sec:org7d640f8}
+\label{sec:orgcb80fd3}
 move to android.
 
 
 
 \chapter{Second Prototype (Android)}
-\label{sec:org320397e}
-We moved to Android, used the open source Tarsos library that gives us methods to transform
-the audio signal from android to FFT.
-Higher Samplerates of 20k is not a problems.
+\label{sec:org319f9aa}
 
-\section{Analysis Sound}
-\label{sec:org511a6a2}
+\section{Research for clap detection in android}
+\label{sec:org6b348b8}
+Java is known to have many open source libraries. For the processing of audio
+signals, the Tarsos library was a good choice. Among other things, this offers a
+ready-made percussion detection which enables to detect sudden peaks in a
+frequency. However, Tarsos also offers more basic functionalities, such as
+transforming an audio signal into the frequency domain using Fast Fourier
+Transformation.
+
+In order to implement and test the necessary functionality for the state machine
+and the UI, the percussions detection from Tarsos was initially used to detect a
+loud noise.
+
+\section{Implementation for data analysis}
+\label{sec:orgcdc663b}
+Some code was soley written for getting data out of the app and was removed for
+later for the final app.
+
+\subsection{{\bfseries\sffamily TODO} Google Drive Docu}
+\label{sec:orgd6417a8}
+When working on the first prototype with the Particle Photon Board, the
+roundtrip time required to get the data from the board to a PC, where we can
+analyze it, was particularly noticeable. For this reason, an automatic upload of
+the CSV data to Google Drive has been implemented. This made it possible to
+quickly transfer all recorded data to a central location and analyze it from
+there on a PC.
+\subsection{CSV Button}
+\label{sec:org020604d}
 \begin{itemize}
-\item Showing frequence diagrams of recorded tests ( Claps, Husten, Schnippen, Reden)
-\item Explain characteristics and approaches for solving the problem of only
-detecting the claps.
+\item why we removed it / android API doesn't allow to have to AudioDispatcher run
+at the same time ( but for CSV we want to record 3 seconds and not only less
+than a second, for detection we don't want to wait 3 seconds for getting a FFT)
 \end{itemize}
 
-\subsection{Prove that our android FFT works}
-\label{sec:org505b32f}
-frequenceVonYoutube1200hz.csv
-
-\begin{center}
-\includegraphics[width=.9\linewidth]{./imgs/ytpicture.png}
-\end{center}
-
-\begin{center}
-\includegraphics[width=.9\linewidth]{./imgs/yttestandroid.png}
-\end{center}
-
-\url{https://www.youtube.com/watch?v=qNf9nzvnd1k}
-
-\chapter{Implementation (Android)}
-\label{sec:org1401e45}
+\section{Implementation}
+\label{sec:orgd17f5ad}
+\subsection{Calp Detector}
+\label{sec:org9ae6af9}
 \begin{itemize}
-\item UI Screenshots
-\item How we implemented the clap detection in the end.
+\item Tarsos library ( for FFT )
+\end{itemize}
+\subsection{State-machine}
+\label{sec:orgf5ddf22}
+A state machine was implemented to represent the different states of the app.
+The following diagram shows the implemented state machine.
+
+\begin{center}
+\includegraphics[width=.9\linewidth]{./imgs/statemachine.png}
+\end{center}
+
+There are a total of four states in which the app can be in. 
+\begin{itemize}
+\item Idle: The initial state when starting the app and the state after an activity tracking has been completed.
+\item StartPrecondition: If the app is in the idle state and a clap is detected, the state machine switches to this state. When switching to this state, a timer is started which defines the time window in which the second clap must occur in order to switch the state to TrackingActivity. If the timer expires before another clap is detected, the state machine switches back to the idle state.
+\item TrackingActivity: After a second clap is detected while the timer of the start precondition has not yet elapsed, the state machine changes to this state and starts capturing the time by saving a time stamp.
+\item StoppingPrecondition: If the state machine is in the TrackingActivity state and a clap occurs, then the state machine switches to this state, which behaves in the same way as the StartingPrecondition, except that on a successful second clap, it changes to the idle state and the tracking of the current activity is ended.
 \end{itemize}
 
+\subsection{Architecture (aus mainAc raus, UML)}
+\label{sec:orgb0029c3}
 \section{Evalutation}
-\label{sec:orge1bedac}
+\label{sec:org4839a4f}
 \begin{itemize}
 \item How reliable can our implementation detect clap.
+\item Benchmark
+\begin{itemize}
+\item How many time false positives where detected ( 20x husten, 20x schnipsen, 20 klatschen)
 \item Show statistics by trying it out (maybe in different environments (loud,
 silent rooms, outdoors)
 \end{itemize}
+\end{itemize}
+
+
 
 \chapter{Conclusion}
-\label{sec:org77e7451}
+\label{sec:org83012f6}
 \section{Current State}
-\label{sec:orgc960a3e}
+\label{sec:orgaa87f52}
 Refer to to evalution part above. State how difficult this was and the time
 needed to try out more advanced solutions (AI) was not enough.
 
-\section{Project Future}
-\label{sec:orgeb9e4a8}
+\section{Project Outlook}
+\label{sec:org3104bbe}
 Maybe add more debug functionallity inside the App, be able to not only tweak
 parameters inside the code, but also with UI Controls inside the app.
+
+Whistling detection instead of clapping.
+
+
+
+
 
 
 
 \chapter{Referernces}
-\label{sec:orgdc7d373}
+\label{sec:orgb9bf40c}
 \url{http://www.klangfuzzis.de/showthread.php?679817-Was-hat-in-etwa-wie-viel-hz}
+
+\chapter{Aufgaben für uns noch:}
+\label{sec:org01bd020}
+\subsection{{\bfseries\sffamily TODO} Tarsos Code rausnkopieren}
+\label{sec:orgcaf13d7}
+\subsection{{\bfseries\sffamily TODO} State-machine implement}
+\label{sec:orgf77b6e7}
+\subsection{{\bfseries\sffamily TODO} Fork vom android und unsere repo reinkopieren}
+\label{sec:org6cdb27c}
 \end{document}
